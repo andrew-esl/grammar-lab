@@ -100,6 +100,10 @@ create table if not exists public.attempts (
   created_at  timestamptz not null default now()
 );
 
+-- потрібен, щоб повторний імпорт контенту оновлював рядки, а не дублював їх
+create unique index if not exists uq_exercises_legacy_shared
+  on public.exercises (legacy_id) where student_id is null;
+
 create index if not exists idx_theory_topic     on public.theory_blocks(topic_id);
 create index if not exists idx_ex_topic         on public.exercises(topic_id);
 create index if not exists idx_ex_student       on public.exercises(student_id);
