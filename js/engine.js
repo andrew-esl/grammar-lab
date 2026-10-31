@@ -1,10 +1,10 @@
 // ==================== РУШІЙ ====================
-// Дані тем живуть у /data/*.js і реєструються у window.TOPICS_DATA.
-// Цей файл не містить навчального контенту — правити його треба лише
-// при зміні механік, фільтрів чи інтерфейсу.
-const TOPICS_DATA = window.TOPICS_DATA || {};
+// Контент приходить із бази (js/api.js) у тому самому форматі,
+// що раніше лежав у data/*.js. Цей файл не містить навчального
+// матеріалу — правити його треба лише при зміні механік чи інтерфейсу.
+let TOPICS_DATA = {};
 
-let currentTopic = "adjectives"; // Початкова тема
+let currentTopic = null;         // ставиться після завантаження: перша доступна тема
 let currentMainTab = "theory";
 let currentStudentLevel = "all"; // all, elementary, intermediate, advanced
 let solvedState = {};
@@ -15,10 +15,32 @@ let gapDraft = {};   // чернетки введених, але ще не пе
 // false → показується РІВНО обраний рівень (Advanced бачить тільки advanced)
 const CUMULATIVE_LEVELS = true;
 
-try {
-  solvedState = JSON.parse(localStorage.getItem("grammar_lab_v4_progress") || "{}");
-} catch (e) {
+// Завантажує контент і прогрес, після чого малює сторінку.
+async function loadDataAndRender() {
+  const [data, solvedUuids] = await Promise.all([apiLoadContent(), apiLoadSolved()]);
+  TOPICS_DATA = data;
+
   solvedState = {};
+  forEachExercise(item => {
+    if (solvedUuids.has(item.__uuid)) solvedState[item.id] = true;
+  });
+
+  const keys = Object.keys(TOPICS_DATA);
+  if (!keys.length) {
+    document.getElementById("current-topic-title").textContent = "Тем поки не призначено";
+    document.getElementById("section-theory").innerHTML =
+      '<div class="bg-white p-6 rounded-2xl border border-slate-200 text-slate-600">' +
+      'Викладач ще не відкрив вам жодної теми. Зверніться до нього.</div>';
+    return;
+  }
+  if (!currentTopic || !TOPICS_DATA[currentTopic]) currentTopic = keys[0];
+  updateView();
+}
+
+function forEachExercise(fn) {
+  for (const topic of Object.values(TOPICS_DATA)) {
+    for (const arr of Object.values(topic.exercises || {})) arr.forEach(fn);
+  }
 }
 
 // ==================== ІНТЕРФЕЙС ТА НАВІГАЦІЯ ====================
@@ -217,7 +239,9 @@ function checkOrderItem(itemId) {
   const userStr = orderState[itemId].selected.join(" ");
   const fb = document.getElementById("fb-" + itemId);
   fb.classList.remove("hidden");
-  if (userStr === item.answer || (item.altAnswer && userStr === item.altAnswer)) {
+  const ok = userStr === item.answer || (item.altAnswer && userStr === item.altAnswer);
+  apiRecordAttempt(item.__uuid, userStr, ok);
+  if (ok) {
     fb.className = "text-xs mt-2 font-semibold text-emerald-600";
     fb.textContent = "✅ Правильно! " + item.hint;
     markSolved(itemId);
@@ -267,7 +291,9 @@ function checkGapItem(itemId) {
   const val = normalizeAnswer(raw);
   const fb = document.getElementById("fb-" + itemId);
   fb.classList.remove("hidden");
-  if (item.answers.map(normalizeAnswer).includes(val)) {
+  const ok = item.answers.map(normalizeAnswer).includes(val);
+  apiRecordAttempt(item.__uuid, raw, ok);
+  if (ok) {
     fb.className = "text-xs mt-2 text-emerald-600 font-semibold";
     fb.textContent = "✅ Правильно! " + item.explanation;
     delete gapDraft[itemId];
@@ -305,6 +331,7 @@ function checkChoiceItem(itemId, selected) {
   if (!item) return;
   const fb = document.getElementById("fb-" + itemId);
   fb.classList.remove("hidden");
+  apiRecordAttempt(item.__uuid, selected, selected === item.correct);
   if (selected === item.correct) {
     markSolved(itemId);
     rerenderItem(itemId);
@@ -337,6 +364,7 @@ function checkCrossItem(itemId, wIdx) {
   if (!item) return;
   const fb = document.getElementById("fb-" + itemId);
   fb.classList.remove("hidden");
+  apiRecordAttempt(item.__uuid, item.words[wIdx], wIdx === item.extraIndex);
   if (wIdx === item.extraIndex) {
     markSolved(itemId);
     rerenderItem(itemId);
@@ -370,6 +398,7 @@ function checkAbcdItem(itemId, oIdx) {
   if (!item) return;
   const fb = document.getElementById("fb-" + itemId);
   fb.classList.remove("hidden");
+  apiRecordAttempt(item.__uuid, item.options[oIdx], oIdx === item.correct);
   if (oIdx === item.correct) {
     markSolved(itemId);
     rerenderItem(itemId);
@@ -415,10 +444,9 @@ function getTopicCounts(topicKey) {
 }
 
 function markSolved(itemId) {
+  // Сам факт зарахування зберігається в базі як правильна спроба
+  // (її вже записав apiRecordAttempt), тут лише оновлюємо екран.
   solvedState[itemId] = true;
-  try {
-    localStorage.setItem("grammar_lab_v4_progress", JSON.stringify(solvedState));
-  } catch (e) {}
   updateProgressUI();
 }
 
@@ -434,26 +462,27 @@ function updateProgressUI() {
   });
 }
 
-function resetProgress() {
+// Доступно лише викладачеві (кнопку сховано для учнів у auth.js):
+// стирає історію спроб, тож учень не може знищити статистику власних помилок.
+async function resetProgress() {
   const topic = TOPICS_DATA[currentTopic];
+  if (!topic) return;
   if (!confirm(`Скинути прогрес теми «${topic.title}»?\n(Інші теми залишаться без змін.)`)) return;
-  const exGroups = topic.exercises;
-  Object.keys(exGroups).forEach(type => {
-    exGroups[type].forEach(item => {
-      delete solvedState[item.id];
-      delete orderState[item.id];
-      delete gapDraft[item.id];
-    });
-  });
+
+  const uuids = [];
+  Object.values(topic.exercises).forEach(arr => arr.forEach(item => {
+    uuids.push(item.__uuid);
+    delete solvedState[item.id];
+    delete orderState[item.id];
+    delete gapDraft[item.id];
+  }));
+
   try {
-    localStorage.setItem("grammar_lab_v4_progress", JSON.stringify(solvedState));
-  } catch (e) {}
-  if (currentMainTab === 'practice') {
-    renderTopicExercises();
+    await apiResetTopicProgress(uuids);
+  } catch (e) {
+    alert("Не вдалося скинути прогрес: " + (e.message || e));
+    return;
   }
+  if (currentMainTab === "practice") renderTopicExercises();
   updateProgressUI();
 }
-
-window.onload = function() {
-  updateView();
-};
