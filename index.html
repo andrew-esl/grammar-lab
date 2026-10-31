@@ -6,13 +6,17 @@
   <title>Grammar Lab — англійська граматика</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/theme.js?v=5"></script>
+  <script src="js/theme.js?v=6"></script>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
     .word-chip { transition: all .15s ease; user-select: none; }
     .word-chip:active { transform: scale(.95); }
     .strike-word { text-decoration: line-through; color: #ef4444; background-color: #fee2e2; border-color: #fca5a5; }
     .shadow-inner-soft { box-shadow: inset 0 1px 3px rgba(15,23,42,.06); }
+    summary::-webkit-details-marker { display: none; }
+    .theory-body table { width: 100%; border-collapse: collapse; }
+    .theory-body td, .theory-body th { border: 1px solid #e2e8f0; padding: 4px 6px; }
+    .theory-body ul { margin-top: .25rem; }
   </style>
 </head>
 <body class="bg-background text-text-body antialiased min-h-screen">
@@ -164,9 +168,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- ?v=N — захист від кешу браузера: ПІСЛЯ КОЖНОЇ ЗМІНИ у js/*.js
        збільшуйте номер, інакше відвідувач може отримати стару версію файлу. -->
-  <script src="js/config.js?v=5"></script>
-  <script src="js/api.js?v=5"></script>
-  <script src="js/engine.js?v=5"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/config.js?v=6"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/theory.js?v=6"></script>
+  <script src="js/engine.js?v=6"></script>
+  <script src="js/auth.js?v=6"></script>
 </body>
 </html>
