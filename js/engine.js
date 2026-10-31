@@ -100,6 +100,16 @@ function updateView() {
   const isTheory = currentMainTab === "theory";
   document.getElementById("section-theory").classList.toggle("hidden", !isTheory);
   document.getElementById("section-practice").classList.toggle("hidden", isTheory);
+  // Неактивну вкладку спорожняємо: інакше одна вправа опинилась би
+  // у DOM двічі (у дрилі й у списку) і перемальовування плуталося б.
+  if (isTheory) {
+    document.getElementById("exercises-list").innerHTML = "";
+    document.getElementById("practice-aside").innerHTML = "";
+  } else {
+    document.getElementById("theory-list").innerHTML = "";
+    document.getElementById("theory-aside").innerHTML = "";
+    initStepSpy([]);
+  }
   document.getElementById("tab-btn-theory").className = isTheory ? TAB_ON : TAB_OFF;
   document.getElementById("tab-btn-practice").className = isTheory ? TAB_OFF : TAB_ON;
 
@@ -139,28 +149,35 @@ function renderSidebar() {
 function renderTheory() {
   const list = document.getElementById("theory-list");
   const aside = document.getElementById("theory-aside");
-  const blocks = TOPICS_DATA[currentTopic].theory.filter(b => shouldShowLevel(b.level));
+  const topic = TOPICS_DATA[currentTopic];
+  const blocks = topic.theory.filter(b => shouldShowLevel(b.level));
 
   if (!blocks.length) {
-    list.innerHTML = emptyCard("Теорії тут немає",
-      "Для цієї теми викладач відкрив лише вправи.");
+    list.innerHTML = emptyCard("Теорії тут немає", "Для цієї теми викладач відкрив лише вправи.");
     aside.innerHTML = "";
+    initStepSpy([]);
     return;
   }
 
-  list.innerHTML = blocks.map((b, i) => `
-    <article id="th-${b.id}" class="bg-surface border border-border-default rounded-2xl p-6 shadow-sm scroll-mt-24">
-      <div class="flex items-start justify-between gap-3 mb-4">
-        <div class="flex items-start gap-3">
-          <div class="w-7 h-7 rounded-lg bg-interactive-subtle text-secondary flex items-center justify-center text-caption-bold shrink-0">${i + 1}</div>
-          <h2 class="text-heading-lg font-bold text-text-primary leading-snug">${b.title}</h2>
-        </div>
-        ${levelBadge(b.level)}
-      </div>
-      <div class="theory-body">${b.contentHtml}</div>
-    </article>`).join("");
+  const stats = getTopicCounts(currentTopic);
+  const page = renderTheoryPage(topic, blocks, stats);
 
-  aside.innerHTML = `
+  // Сторінка з кроками займає всю ширину, звичайна — дві колонки зі змістом.
+  const wide = page.steps.length > 0;
+  document.getElementById("section-theory").className =
+    wide ? "block" : "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start";
+  list.className = wide ? "" : "lg:col-span-8 space-y-5";
+  aside.className = wide ? "hidden" : "lg:col-span-4 lg:sticky lg:top-24";
+
+  list.innerHTML = renderStepNav(page.steps) + page.html;
+  aside.innerHTML = wide ? "" : renderTheoryToc(blocks);
+
+  if (stats.total) mountDrill(topic);
+  initStepSpy(page.steps);
+}
+
+function renderTheoryToc(blocks) {
+  return `
     <div class="bg-surface border border-border-default rounded-2xl p-5 shadow-sm">
       <div class="flex items-center gap-2 mb-3">
         <svg class="w-4 h-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -617,6 +634,7 @@ function markSolved(itemId) {
   // (її вже записав apiRecordAttempt), тут лише оновлюємо екран.
   solvedState[itemId] = true;
   updateProgressUI();
+  if (typeof drillRefresh === "function" && DRILL.items.some(x => x.item.id === itemId)) drillRefresh();
 }
 
 function updateProgressUI() {

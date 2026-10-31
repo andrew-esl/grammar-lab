@@ -51,7 +51,7 @@ async function apiLoadProfile() {
 async function apiLoadContent() {
   const [topics, theory, exercises] = await Promise.all([
     fetchAll(() => sb.from("topics").select("id, slug, title, description, position").order("position").order("id")),
-    fetchAll(() => sb.from("theory_blocks").select("topic_id, block_key, title, level, content_html, position").order("position").order("id")),
+    fetchAll(() => sb.from("theory_blocks").select("topic_id, block_key, title, level, kind, content_html, content_json, position").order("position").order("id")),
     fetchAll(() => sb.from("exercises").select("id, topic_id, legacy_id, type, level, payload, position, source").order("position").order("id")),
   ]);
 
@@ -77,7 +77,9 @@ async function apiLoadContent() {
       id: b.block_key,
       title: b.title,
       level: b.level,
+      kind: b.kind || "prose",
       contentHtml: b.content_html,
+      data: b.content_json || null,
     });
   }
 
