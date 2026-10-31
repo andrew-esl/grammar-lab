@@ -59,7 +59,11 @@ async function bootApp() {
 
   // Кнопку скидання прогресу бачить лише викладач:
   // учень не повинен мати змоги стерти історію своїх помилок.
-  document.getElementById("reset-btn").classList.toggle("hidden", profile.role !== "teacher");
+  const isTeacher = profile.role === "teacher";
+  document.getElementById("reset-btn").classList.toggle("hidden", !isTeacher);
+  document.getElementById("cabinet-link").classList.toggle("hidden", !isTeacher);
+  // Рівень учня задає викладач у кабінеті; самому учневі перемикач лише заважав би.
+  document.getElementById("level-filter-box").classList.toggle("hidden", !isTeacher);
 
   try {
     await loadDataAndRender();

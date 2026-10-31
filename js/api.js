@@ -7,6 +7,20 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Профіль того, хто увійшов: { id, role, full_name }
 let CURRENT_PROFILE = null;
 
+// Supabase віддає щонайбільше 1000 рядків за запит і мовчки обрізає решту.
+// fetchAll тягне сторінками, доки дані не скінчаться.
+// build — функція, що щоразу повертає НОВИЙ запит (без .range).
+const PAGE = 1000;
+async function fetchAll(build) {
+  const out = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await build().range(from, from + PAGE - 1);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < PAGE) return out;
+  }
+}
+
 async function apiSignIn(email, password) {
   const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
   if (error) throw error;
@@ -35,17 +49,16 @@ async function apiLoadProfile() {
 // теми без призначення, блоки теорії вище рівня та сховані вправи
 // просто не потраплять у відповідь.
 async function apiLoadContent() {
-  const [topicsRes, theoryRes, exRes] = await Promise.all([
-    sb.from("topics").select("id, slug, title, description, position").order("position"),
-    sb.from("theory_blocks").select("topic_id, block_key, title, level, content_html, position").order("position"),
-    sb.from("exercises").select("id, topic_id, legacy_id, type, level, payload, position, source").order("position"),
+  const [topics, theory, exercises] = await Promise.all([
+    fetchAll(() => sb.from("topics").select("id, slug, title, description, position").order("position").order("id")),
+    fetchAll(() => sb.from("theory_blocks").select("topic_id, block_key, title, level, content_html, position").order("position").order("id")),
+    fetchAll(() => sb.from("exercises").select("id, topic_id, legacy_id, type, level, payload, position, source").order("position").order("id")),
   ]);
-  for (const r of [topicsRes, theoryRes, exRes]) if (r.error) throw r.error;
 
   const byId = {};
   const data = {};
 
-  for (const t of topicsRes.data) {
+  for (const t of topics) {
     const topic = {
       id: t.slug,
       title: t.title,
@@ -57,7 +70,7 @@ async function apiLoadContent() {
     data[t.slug] = topic;
   }
 
-  for (const b of theoryRes.data) {
+  for (const b of theory) {
     const topic = byId[b.topic_id];
     if (!topic) continue;
     topic.theory.push({
@@ -68,7 +81,7 @@ async function apiLoadContent() {
     });
   }
 
-  for (const e of exRes.data) {
+  for (const e of exercises) {
     const topic = byId[e.topic_id];
     if (!topic || !topic.exercises[e.type]) continue;
     const item = { ...e.payload };
@@ -84,12 +97,9 @@ async function apiLoadContent() {
 
 // Які вправи вже зараховані: беремо з історії спроб.
 async function apiLoadSolved() {
-  const { data, error } = await sb
-    .from("attempts")
-    .select("exercise_id")
-    .eq("is_correct", true);
-  if (error) throw error;
-  return new Set(data.map(r => r.exercise_id));
+  const rows = await fetchAll(() =>
+    sb.from("attempts").select("exercise_id").eq("is_correct", true).order("id"));
+  return new Set(rows.map(r => r.exercise_id));
 }
 
 // Пишемо КОЖНУ спробу, і правильну, і помилкову — з неї складається
