@@ -61,16 +61,21 @@ async function bootApp() {
   // учень не повинен мати змоги стерти історію своїх помилок.
   const isTeacher = profile.role === "teacher";
   document.getElementById("reset-btn").classList.toggle("hidden", !isTeacher);
-  document.getElementById("cabinet-link").classList.toggle("hidden", !isTeacher);
+  const cab = document.getElementById("cabinet-link");
+  cab.classList.toggle("hidden", !isTeacher);
+  cab.classList.toggle("flex", isTeacher);
   // Рівень учня задає викладач у кабінеті; самому учневі перемикач лише заважав би.
   document.getElementById("level-filter-box").classList.toggle("hidden", !isTeacher);
 
   try {
     await loadDataAndRender();
   } catch (e) {
-    document.getElementById("current-topic-title").textContent = "Помилка завантаження";
     console.error(e);
-    alert("Не вдалося завантажити матеріали: " + (e.message || e));
+    document.getElementById("current-topic-title").textContent = "Помилка завантаження";
+    document.getElementById("theory-list").innerHTML =
+      '<div class="bg-surface border border-error-border rounded-2xl p-6">' +
+      '<div class="text-heading-md font-semibold text-error-emphasis mb-1">Не вдалося завантажити матеріали</div>' +
+      '<p class="text-body-base text-text-secondary">' + String(e.message || e) + '</p></div>';
   }
 }
 

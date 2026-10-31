@@ -63,11 +63,11 @@ async function init() {
   let profile;
   try { profile = await apiLoadProfile(); } catch (e) { gate.textContent = "Помилка зʼєднання: " + e.message; return; }
   if (!profile) {
-    gate.innerHTML = 'Спершу <a href="index.html" class="text-indigo-600 underline">увійдіть</a>.';
+    gate.innerHTML = 'Спершу <a href="index.html" class="text-secondary underline">увійдіть</a>.';
     return;
   }
   if (profile.role !== "teacher") {
-    gate.innerHTML = 'Ця сторінка лише для викладача. <a href="index.html" class="text-indigo-600 underline">Повернутися до занять</a>.';
+    gate.innerHTML = 'Ця сторінка лише для викладача. <a href="index.html" class="text-secondary underline">Повернутися до занять</a>.';
     return;
   }
 
@@ -107,7 +107,7 @@ function renderStudentList() {
   const list = STUDENTS.filter(s => !q || studentName(s).toLowerCase().includes(q) || (s.email || "").toLowerCase().includes(q));
 
   if (!STUDENTS.length) {
-    box.innerHTML = '<p class="text-xs text-slate-400 px-1">Учнів поки немає.</p>';
+    box.innerHTML = '<p class="text-caption-xs text-text-tertiary px-1">Учнів поки немає.</p>';
     return;
   }
   box.innerHTML = list.map(s => {
@@ -115,12 +115,12 @@ function renderStudentList() {
     const active = s.id === selectedId;
     return `
       <button onclick="selectStudent('${s.id}')"
-        class="w-full text-left px-3 py-2.5 rounded-xl border transition ${active ? "bg-indigo-50 border-indigo-200" : "bg-white border-slate-200 hover:border-indigo-300"}">
-        <div class="text-sm font-semibold ${active ? "text-indigo-700" : "text-slate-800"} truncate">${esc(studentName(s))}</div>
-        <div class="text-xs text-slate-500 truncate">${esc(s.email || "")}</div>
-        <div class="text-[11px] text-slate-400 mt-0.5">Тем відкрито: ${topics}</div>
+        class="w-full text-left px-3 py-2.5 rounded-xl border transition ${active ? "bg-interactive-subtle border-interactive-border" : "bg-surface border-transparent hover:bg-surface-subtle"}">
+        <div class="text-body-semibold ${active ? "text-secondary" : "text-text-primary"} truncate">${esc(studentName(s))}</div>
+        <div class="text-caption-xs text-text-muted truncate">${esc(s.email || "")}</div>
+        <div class="text-micro text-text-tertiary mt-0.5">Тем відкрито: ${topics}</div>
       </button>`;
-  }).join("") || '<p class="text-xs text-slate-400 px-1">Нікого не знайдено.</p>';
+  }).join("") || '<p class="text-caption-xs text-text-tertiary px-1">Нікого не знайдено.</p>';
 }
 
 function selectStudent(id) {
@@ -139,18 +139,18 @@ function renderPanel() {
   const s = STUDENTS.find(x => x.id === selectedId);
   const panel = document.getElementById("student-panel");
   if (!s) {
-    panel.innerHTML = '<div class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-sm">Оберіть учня ліворуч або додайте нового.</div>';
+    panel.innerHTML = '<div class="bg-surface border border-border-default rounded-2xl p-8 text-center text-text-muted text-sm">Оберіть учня ліворуч або додайте нового.</div>';
     return;
   }
   const tab = (key, label) =>
-    `<button onclick="switchTab('${key}')" class="px-5 py-2.5 text-sm font-semibold border-b-2 rounded-t-lg ${currentTab === key ? "tab-on" : "tab-off"}">${label}</button>`;
+    `<button onclick="switchTab('${key}')" class="px-5 py-2.5 text-body-semibold border-b-2 rounded-t-lg ${currentTab === key ? "tab-on" : "tab-off"}">${label}</button>`;
 
   panel.innerHTML = `
     <div class="mb-4">
-      <h2 class="text-xl font-bold text-slate-900">${esc(studentName(s))}</h2>
-      <p class="text-sm text-slate-500">${esc(s.email || "")} · з ${fmtDate(s.created_at).split(",")[0]}</p>
+      <h2 class="text-heading-xl font-bold text-text-primary">${esc(studentName(s))}</h2>
+      <p class="text-sm text-text-muted">${esc(s.email || "")} · з ${fmtDate(s.created_at).split(",")[0]}</p>
     </div>
-    <div class="flex gap-1 border-b border-slate-200 mb-5">
+    <div class="flex gap-1 border-b border-border-default mb-5">
       ${tab("access", "Доступ до тем")}${tab("results", "Результати")}${tab("account", "Акаунт")}
     </div>
     <div id="tab-body"></div>`;
@@ -183,32 +183,32 @@ function renderAccessTab(s) {
     const vis = on ? visibleExercises(s.id, t.id).length : 0;
     const hiddenN = on ? [...(HIDDEN[s.id] || [])].filter(id => EX_BY_ID[id] && EX_BY_ID[id].topic_id === t.id).length : 0;
     return `
-      <div class="border border-slate-200 rounded-xl bg-white ${on ? "" : "opacity-80"}">
+      <div class="border border-border-default rounded-xl bg-surface ${on ? "" : "opacity-80"}">
         <div class="flex flex-wrap items-center gap-3 p-3">
           <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-[200px]">
-            <input type="checkbox" ${on ? "checked" : ""} onchange="toggleTopic('${t.id}', this.checked)" class="w-4 h-4 accent-indigo-600">
-            <span class="text-sm font-semibold text-slate-800">${esc(t.title)}</span>
+            <input type="checkbox" ${on ? "checked" : ""} onchange="toggleTopic('${t.id}', this.checked)" class="w-4 h-4 accent-secondary">
+            <span class="text-body-semibold text-text-primary">${esc(t.title)}</span>
           </label>
           ${on ? `
-            <select onchange="setTopicField('${t.id}', 'max_level', this.value)" class="text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white">
+            <select onchange="setTopicField('${t.id}', 'max_level', this.value)" class="text-xs border border-border-input rounded-lg px-2 py-1.5 bg-white">
               ${Object.entries(LEVEL_LABELS).map(([k, v]) => `<option value="${k}" ${a.max_level === k ? "selected" : ""}>до ${v}</option>`).join("")}
             </select>
-            <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-              <input type="checkbox" ${a.theory_visible ? "checked" : ""} onchange="setTopicField('${t.id}', 'theory_visible', this.checked)" class="accent-indigo-600">
+            <label class="flex items-center gap-1.5 text-caption-xs text-text-secondary cursor-pointer">
+              <input type="checkbox" ${a.theory_visible ? "checked" : ""} onchange="setTopicField('${t.id}', 'theory_visible', this.checked)" class="accent-secondary">
               теорія
             </label>
-            <button onclick="toggleExerciseList('${t.id}')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded hover:bg-indigo-50">
+            <button onclick="toggleExerciseList('${t.id}')" class="text-xs font-semibold text-secondary hover:text-interactive-hover px-2 py-1 rounded hover:bg-interactive-subtle">
               Вправи: ${vis}/${total}${hiddenN ? ` · сховано ${hiddenN}` : ""} ${expandedTopic === t.id ? "▲" : "▼"}
-            </button>` : `<span class="text-xs text-slate-400">закрито</span>`}
-          <span id="saved-${t.id}" class="text-[11px] text-emerald-600 font-medium w-16 text-right"></span>
+            </button>` : `<span class="text-caption-xs text-text-tertiary">закрито</span>`}
+          <span id="saved-${t.id}" class="text-micro text-success-emphasis font-medium w-16 text-right"></span>
         </div>
         ${on && expandedTopic === t.id ? renderExerciseList(s.id, t.id, a) : ""}
       </div>`;
   }).join("");
 
   body.innerHTML = `
-    <p class="text-xs text-slate-500 mb-3">Учень бачить лише відкриті теми, вправи й теорію не вище обраного рівня. Зміни зберігаються одразу.</p>
-    <div class="space-y-2">${rows || '<p class="text-sm text-slate-500">У базі ще немає тем.</p>'}</div>`;
+    <p class="text-caption-xs text-text-muted mb-3">Учень бачить лише відкриті теми, вправи й теорію не вище обраного рівня. Зміни зберігаються одразу.</p>
+    <div class="space-y-2">${rows || '<p class="text-sm text-text-muted">У базі ще немає тем.</p>'}</div>`;
 }
 
 function renderExerciseList(studentId, topicId, a) {
@@ -220,10 +220,10 @@ function renderExerciseList(studentId, topicId, a) {
   const html = Object.entries(groups).map(([type, list]) => `
     <div class="mt-3">
       <div class="flex items-center justify-between mb-1">
-        <span class="text-xs font-bold uppercase tracking-wide text-slate-500">${TYPE_LABELS[type] || type} · ${list.length}</span>
-        <span class="text-[11px] space-x-2">
-          <button onclick="bulkHide('${topicId}', '${type}', false)" class="text-indigo-600 hover:underline">показати всі</button>
-          <button onclick="bulkHide('${topicId}', '${type}', true)" class="text-slate-500 hover:underline">сховати всі</button>
+        <span class="text-caption-bold uppercase tracking-wide text-text-muted">${TYPE_LABELS[type] || type} · ${list.length}</span>
+        <span class="text-micro space-x-2">
+          <button onclick="bulkHide('${topicId}', '${type}', false)" class="text-secondary hover:underline">показати всі</button>
+          <button onclick="bulkHide('${topicId}', '${type}', true)" class="text-text-muted hover:underline">сховати всі</button>
         </span>
       </div>
       <div class="space-y-1">
@@ -233,22 +233,22 @@ function renderExerciseList(studentId, topicId, a) {
           const isHidden = !personal && hidden.has(e.id);
           const t = exerciseText(e.type, e.payload);
           return `
-            <label class="flex items-start gap-2 text-xs px-2 py-1.5 rounded-lg ${above ? "bg-slate-50 text-slate-400" : "hover:bg-slate-50"}">
+            <label class="flex items-start gap-2 text-xs px-2 py-1.5 rounded-lg ${above ? "bg-surface-subtle text-text-tertiary" : "hover:bg-surface-subtle"}">
               <input type="checkbox" ${!isHidden ? "checked" : ""} ${personal ? "disabled" : ""}
-                onchange="setHidden('${e.id}', !this.checked)" class="mt-0.5 accent-indigo-600">
+                onchange="setHidden('${e.id}', !this.checked)" class="mt-0.5 accent-secondary">
               <span class="flex-1">
-                <span class="font-mono text-[10px] text-slate-400 mr-1">${esc(e.legacy_id || "")}</span>
+                <span class="font-mono text-micro text-text-tertiary mr-1">${esc(e.legacy_id || "")}</span>
                 ${esc(t.question)}
-                ${above ? `<span class="ml-1 text-[10px] font-semibold text-amber-600">вище рівня (${LEVEL_LABELS[e.level]})</span>` : ""}
-                ${personal ? `<span class="ml-1 text-[10px] font-semibold text-violet-600">персональна</span>` : ""}
+                ${above ? `<span class="ml-1 text-micro font-semibold text-warning">вище рівня (${LEVEL_LABELS[e.level]})</span>` : ""}
+                ${personal ? `<span class="ml-1 text-micro font-semibold text-accent-personal">персональна</span>` : ""}
               </span>
             </label>`;
         }).join("")}
       </div>
     </div>`).join("");
 
-  return `<div class="border-t border-slate-100 px-3 pb-3">${html}
-    <p class="text-[11px] text-slate-400 mt-3">Зняти галочку — сховати вправу від цього учня. Вправи «вище рівня» він і так не бачить, доки не підвищите рівень.</p></div>`;
+  return `<div class="border-t border-border-default px-3 pb-3">${html}
+    <p class="text-micro text-text-tertiary mt-3">Зняти галочку — сховати вправу від цього учня. Вправи «вище рівня» він і так не бачить, доки не підвищите рівень.</p></div>`;
 }
 
 function toggleExerciseList(topicId) {
@@ -344,14 +344,14 @@ async function loadAttempts(sid, force = false) {
 
 async function renderResultsTab(s) {
   const body = document.getElementById("tab-body");
-  body.innerHTML = '<p class="text-sm text-slate-500">Завантажуємо спроби…</p>';
+  body.innerHTML = '<p class="text-sm text-text-muted">Завантажуємо спроби…</p>';
   let attempts;
   try { attempts = await loadAttempts(s.id, true); }
-  catch (e) { body.innerHTML = `<p class="text-sm text-rose-600">Помилка: ${esc(e.message)}</p>`; return; }
+  catch (e) { body.innerHTML = `<p class="text-sm text-error">Помилка: ${esc(e.message)}</p>`; return; }
   if (selectedId !== s.id || currentTab !== "results") return; // користувач уже перейшов деінде
 
   if (!attempts.length) {
-    body.innerHTML = '<div class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-500">Учень ще не виконав жодної вправи.</div>';
+    body.innerHTML = '<div class="bg-surface border border-border-default rounded-xl p-6 text-sm text-text-muted">Учень ще не виконав жодної вправи.</div>';
     return;
   }
 
@@ -371,17 +371,17 @@ async function renderResultsTab(s) {
     const tAcc = tAtt.length ? Math.round(tAtt.filter(a => a.is_correct).length / tAtt.length * 100) : null;
     const pct = avail.length ? Math.round(tSolved / avail.length * 100) : 0;
     return `
-      <tr class="border-t border-slate-100">
-        <td class="py-2 pr-3 text-sm font-medium">${esc(t.title)}${(ASSIGN[s.id] || {})[t.id] ? "" : ' <span class="text-[10px] text-slate-400">(закрита)</span>'}</td>
+      <tr class="border-t border-border-default">
+        <td class="py-2 pr-3 text-body-medium">${esc(t.title)}${(ASSIGN[s.id] || {})[t.id] ? "" : ' <span class="text-micro text-text-tertiary">(закрита)</span>'}</td>
         <td class="py-2 pr-3 text-sm">
           <div class="flex items-center gap-2">
-            <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-indigo-600 h-full" style="width:${pct}%"></div></div>
-            <span class="text-xs text-slate-600">${tSolved}/${avail.length}</span>
+            <div class="w-24 bg-surface-subtle h-1.5 rounded-full overflow-hidden"><div class="bg-secondary h-full" style="width:${pct}%"></div></div>
+            <span class="text-caption-xs text-text-secondary">${tSolved}/${avail.length}</span>
           </div>
         </td>
-        <td class="py-2 pr-3 text-xs text-slate-600">${tAtt.length}</td>
-        <td class="py-2 pr-3 text-xs ${tAcc !== null && tAcc < 60 ? "text-rose-600 font-semibold" : "text-slate-600"}">${tAcc === null ? "—" : tAcc + "%"}</td>
-        <td class="py-2 text-right">${tAtt.length ? `<button onclick="resetTopicProgress('${t.id}')" class="text-[11px] text-slate-400 hover:text-rose-600">скинути</button>` : ""}</td>
+        <td class="py-2 pr-3 text-caption-xs text-text-secondary">${tAtt.length}</td>
+        <td class="py-2 pr-3 text-xs ${tAcc !== null && tAcc < 60 ? "text-error font-semibold" : "text-text-secondary"}">${tAcc === null ? "—" : tAcc + "%"}</td>
+        <td class="py-2 text-right">${tAtt.length ? `<button onclick="resetTopicProgress('${t.id}')" class="text-micro text-text-tertiary hover:text-error">скинути</button>` : ""}</td>
       </tr>`;
   }).join("");
 
@@ -404,16 +404,16 @@ async function renderResultsTab(s) {
     const t = exerciseText(e.type, e.payload);
     const topic = TOPICS.find(x => x.id === e.topic_id);
     return `
-      <div class="border border-slate-200 rounded-lg p-3 bg-white">
+      <div class="border border-border-default rounded-lg p-3 bg-surface">
         <div class="flex items-start justify-between gap-3">
-          <div class="text-sm text-slate-800">${esc(t.question)}</div>
-          <span class="shrink-0 text-xs font-bold ${solved.has(id) ? "text-amber-600" : "text-rose-600"}">${r.wrong} помил. ${solved.has(id) ? "· потім вірно" : "· не здолано"}</span>
+          <div class="text-sm text-text-primary">${esc(t.question)}</div>
+          <span class="shrink-0 text-caption-bold ${solved.has(id) ? "text-warning" : "text-error"}">${r.wrong} помил. ${solved.has(id) ? "· потім вірно" : "· не здолано"}</span>
         </div>
-        <div class="text-xs mt-1.5 text-slate-500">
+        <div class="text-xs mt-1.5 text-text-muted">
           ${esc(topic?.title || "")} · ${TYPE_LABELS[e.type] || e.type}
         </div>
-        <div class="text-xs mt-1.5"><span class="text-slate-500">Правильно:</span> <span class="text-emerald-700 font-medium">${esc(t.correct)}</span></div>
-        ${r.answers.length ? `<div class="text-xs mt-0.5"><span class="text-slate-500">Відповідав:</span> <span class="text-rose-600">${r.answers.map(esc).join(" · ")}</span></div>` : ""}
+        <div class="text-xs mt-1.5"><span class="text-text-muted">Правильно:</span> <span class="text-success-emphasis font-medium">${esc(t.correct)}</span></div>
+        ${r.answers.length ? `<div class="text-xs mt-0.5"><span class="text-text-muted">Відповідав:</span> <span class="text-error">${r.answers.map(esc).join(" · ")}</span></div>` : ""}
       </div>`;
   }).join("");
 
@@ -423,19 +423,19 @@ async function renderResultsTab(s) {
     if (!e) return "";
     const t = exerciseText(e.type, e.payload);
     return `
-      <tr class="border-t border-slate-100 align-top">
-        <td class="py-1.5 pr-3 text-[11px] text-slate-400 whitespace-nowrap">${fmtDate(a.created_at)}</td>
-        <td class="py-1.5 pr-3 text-xs text-slate-700">${esc(t.question)}</td>
-        <td class="py-1.5 pr-3 text-xs text-rose-600">${esc(a.answer || "—")}</td>
-        <td class="py-1.5 text-xs text-emerald-700">${esc(t.correct)}</td>
+      <tr class="border-t border-border-default align-top">
+        <td class="py-1.5 pr-3 text-micro text-text-tertiary whitespace-nowrap">${fmtDate(a.created_at)}</td>
+        <td class="py-1.5 pr-3 text-caption-xs text-text-secondary">${esc(t.question)}</td>
+        <td class="py-1.5 pr-3 text-caption-xs text-error">${esc(a.answer || "—")}</td>
+        <td class="py-1.5 text-caption-xs text-success-emphasis">${esc(t.correct)}</td>
       </tr>`;
   }).join("");
 
   const card = (label, value, sub = "") => `
-    <div class="bg-white border border-slate-200 rounded-xl p-4">
-      <div class="text-xs text-slate-500">${label}</div>
-      <div class="text-2xl font-bold text-slate-900 mt-1">${value}</div>
-      ${sub ? `<div class="text-[11px] text-slate-400 mt-0.5">${sub}</div>` : ""}
+    <div class="bg-surface border border-border-default rounded-xl p-4">
+      <div class="text-caption-xs text-text-muted">${label}</div>
+      <div class="text-display-title font-bold text-text-primary mt-1">${value}</div>
+      ${sub ? `<div class="text-micro text-text-tertiary mt-0.5">${sub}</div>` : ""}
     </div>`;
 
   body.innerHTML = `
@@ -446,10 +446,10 @@ async function renderResultsTab(s) {
       ${card("Остання активність", fmtDate(attempts[0].created_at).split(",")[0], fmtDate(attempts[0].created_at).split(",")[1] || "")}
     </div>
 
-    <h3 class="text-sm font-bold text-slate-900 mb-2">По темах</h3>
-    <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 mb-6 overflow-x-auto">
+    <h3 class="text-sm font-bold text-text-primary mb-2">По темах</h3>
+    <div class="bg-surface border border-border-default rounded-xl px-4 py-2 mb-6 overflow-x-auto">
       <table class="w-full">
-        <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400">
+        <thead><tr class="text-left text-micro uppercase tracking-wide text-text-tertiary">
           <th class="py-1.5 pr-3 font-semibold">Тема</th><th class="py-1.5 pr-3 font-semibold">Зроблено</th>
           <th class="py-1.5 pr-3 font-semibold">Спроб</th><th class="py-1.5 pr-3 font-semibold">Точність</th><th></th>
         </tr></thead>
@@ -458,14 +458,14 @@ async function renderResultsTab(s) {
     </div>
 
     ${hard.length ? `
-      <h3 class="text-sm font-bold text-slate-900 mb-2">Найважчі вправи</h3>
+      <h3 class="text-sm font-bold text-text-primary mb-2">Найважчі вправи</h3>
       <div class="space-y-2 mb-6">${hardRows}</div>` : ""}
 
     ${recent ? `
-      <h3 class="text-sm font-bold text-slate-900 mb-2">Останні помилки</h3>
-      <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 overflow-x-auto">
+      <h3 class="text-sm font-bold text-text-primary mb-2">Останні помилки</h3>
+      <div class="bg-surface border border-border-default rounded-xl px-4 py-2 overflow-x-auto">
         <table class="w-full">
-          <thead><tr class="text-left text-[11px] uppercase tracking-wide text-slate-400">
+          <thead><tr class="text-left text-micro uppercase tracking-wide text-text-tertiary">
             <th class="py-1.5 pr-3 font-semibold">Коли</th><th class="py-1.5 pr-3 font-semibold">Вправа</th>
             <th class="py-1.5 pr-3 font-semibold">Відповідь учня</th><th class="py-1.5 font-semibold">Правильно</th>
           </tr></thead>
@@ -491,36 +491,36 @@ async function resetTopicProgress(topicId) {
 // ---------- вкладка «Акаунт» ----------
 function renderAccountTab(s) {
   const body = document.getElementById("tab-body");
-  const input = "w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600";
+  const input = "w-full px-3 py-2 text-body-base bg-surface border border-border-input rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary transition";
   body.innerHTML = `
     <div class="space-y-5 max-w-lg">
-      <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-        <h3 class="text-sm font-bold text-slate-900">Дані учня</h3>
+      <div class="bg-surface border border-border-default rounded-xl p-5 space-y-3">
+        <h3 class="text-sm font-bold text-text-primary">Дані учня</h3>
         <input id="acc-name" value="${esc(s.full_name || "")}" placeholder="Імʼя та прізвище" class="${input}">
         <textarea id="acc-note" rows="3" placeholder="Приватна нотатка (учень її не бачить)" class="${input}">${esc(s.note || "")}</textarea>
         <div class="flex items-center gap-3">
-          <button onclick="saveStudentInfo()" class="text-sm font-semibold px-4 py-2 rounded-lg bg-slate-900 hover:bg-indigo-600 text-white">Зберегти</button>
-          <span id="acc-saved" class="text-xs text-emerald-600 font-medium"></span>
+          <button onclick="saveStudentInfo()" class="text-body-semibold px-4 py-2 rounded-xl bg-text-primary hover:bg-secondary text-text-inverse">Зберегти</button>
+          <span id="acc-saved" class="text-caption-xs text-success-emphasis font-medium"></span>
         </div>
-        <p class="text-[11px] text-slate-400">Пошта: ${esc(s.email || "—")}. Змінити її можна лише в панелі Supabase.</p>
+        <p class="text-micro text-text-tertiary">Пошта: ${esc(s.email || "—")}. Змінити її можна лише в панелі Supabase.</p>
       </div>
 
-      <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-        <h3 class="text-sm font-bold text-slate-900">Новий пароль</h3>
+      <div class="bg-surface border border-border-default rounded-xl p-5 space-y-3">
+        <h3 class="text-sm font-bold text-text-primary">Новий пароль</h3>
         <div class="flex gap-2">
-          <input id="acc-pass" placeholder="Від 8 символів" class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-mono">
-          <button onclick="document.getElementById('acc-pass').value = generatePassword()" class="text-xs font-semibold px-3 rounded-lg border border-slate-300 hover:border-indigo-500">Згенерувати</button>
+          <input id="acc-pass" placeholder="Від 8 символів" class="flex-1 px-3 py-2 text-body-base bg-surface border border-border-input rounded-lg text-text-primary focus:outline-none focus:border-secondary transition font-mono">
+          <button onclick="document.getElementById('acc-pass').value = generatePassword()" class="text-caption-bold px-3 rounded-lg border border-border-input hover:border-secondary transition">Згенерувати</button>
         </div>
         <div class="flex items-center gap-3">
-          <button id="acc-pass-btn" onclick="changeStudentPassword()" class="text-sm font-semibold px-4 py-2 rounded-lg bg-slate-900 hover:bg-indigo-600 text-white disabled:opacity-60">Змінити пароль</button>
+          <button id="acc-pass-btn" onclick="changeStudentPassword()" class="text-body-semibold px-4 py-2 rounded-xl bg-text-primary hover:bg-secondary text-text-inverse disabled:opacity-60">Змінити пароль</button>
           <span id="acc-pass-msg" class="text-xs font-medium"></span>
         </div>
       </div>
 
-      <div class="bg-white border border-rose-200 rounded-xl p-5 space-y-3">
-        <h3 class="text-sm font-bold text-rose-700">Видалити учня</h3>
-        <p class="text-xs text-slate-600">Акаунт, доступи, персональні вправи і вся історія спроб будуть видалені назавжди.</p>
-        <button onclick="deleteStudent()" class="text-sm font-semibold px-4 py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50">Видалити</button>
+      <div class="bg-surface border border-error-border rounded-xl p-5 space-y-3">
+        <h3 class="text-sm font-bold text-error-emphasis">Видалити учня</h3>
+        <p class="text-caption-xs text-text-secondary">Акаунт, доступи, персональні вправи і вся історія спроб будуть видалені назавжди.</p>
+        <button onclick="deleteStudent()" class="text-body-semibold px-4 py-2 rounded-lg border border-error-border text-error-emphasis hover:bg-error-surface">Видалити</button>
       </div>
     </div>`;
 }
@@ -543,14 +543,14 @@ async function changeStudentPassword() {
   const msg = document.getElementById("acc-pass-msg");
   const password = document.getElementById("acc-pass").value;
   btn.disabled = true;
-  msg.className = "text-xs font-medium text-slate-500";
+  msg.className = "text-xs font-medium text-text-muted";
   msg.textContent = "Зберігаємо…";
   try {
     await invokeAdmin({ action: "set_password", student_id: selectedId, password });
-    msg.className = "text-xs font-medium text-emerald-600";
+    msg.className = "text-xs font-medium text-success-emphasis";
     msg.textContent = "Пароль змінено. Передайте його учневі.";
   } catch (e) {
-    msg.className = "text-xs font-medium text-rose-600";
+    msg.className = "text-xs font-medium text-error";
     msg.textContent = e.message;
   } finally {
     btn.disabled = false;
