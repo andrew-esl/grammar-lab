@@ -155,13 +155,14 @@ drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles for select
   using (id = auth.uid() or public.owns_student(id));
 
+-- Учні профіль не редагують. Викладач редагує лише своїх учнів і лише як учнів.
+-- (Роль додатково захищає тригер guard_profile_role у 05_teacher_cabinet.sql.)
 drop policy if exists profiles_update_self on public.profiles;
-create policy profiles_update_self on public.profiles for update
-  using (id = auth.uid()) with check (id = auth.uid() and role = 'student' or id = auth.uid());
 
 drop policy if exists profiles_teacher_manage on public.profiles;
 create policy profiles_teacher_manage on public.profiles for update
-  using (public.owns_student(id)) with check (public.owns_student(id));
+  using (public.owns_student(id))
+  with check (role = 'student' and teacher_id = auth.uid());
 
 -- --- topics ---
 drop policy if exists topics_select on public.topics;
