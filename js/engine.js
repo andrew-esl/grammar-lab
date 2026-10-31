@@ -364,23 +364,38 @@ function fillOrderRow(row, t) {
 
   row.innerHTML = `
     ${shell.html}
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="flex flex-wrap gap-1.5 min-h-[40px] flex-1 min-w-[200px] px-3 py-1.5 bg-surface border border-dashed border-border-input rounded-lg items-center shadow-inner-soft">
-        ${st.selected.length === 0
-          ? '<span class="text-caption-xs text-text-tertiary italic">Натискайте слова нижче…</span>'
-          : st.selected.map((w, i) => `
-            <button onclick="removeOrderWord('${t.id}', ${i})"
-              class="word-chip flex items-center gap-1.5 bg-secondary text-text-inverse text-caption-bold px-2.5 py-1.5 rounded-lg shadow-sm">
-              ${w}<svg class="w-3 h-3 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-            </button>`).join("")}
-      </div>
-      <button onclick="checkOrderItem('${t.id}')" class="${BTN_CHECK}">Перевірити</button>
+    <!-- Зона складеного речення -->
+    <div class="p-3 sm:p-4 bg-interactive-subtle/50 border-2 border-dashed border-secondary/40 rounded-2xl min-h-[64px] flex flex-wrap items-center gap-2.5 mb-3">
+      ${st.selected.length === 0
+        ? `<span class="flex items-center gap-1.5 px-1 text-caption-bold text-secondary pointer-events-none select-none">
+             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a2 2 0 114 0v5m0 0V9a2 2 0 114 0v2m0 0a2 2 0 114 0v4a6 6 0 01-6 6h-2a6 6 0 01-6-6v-1a2 2 0 114 0"/></svg>
+             Натискайте слова нижче, щоб скласти речення
+           </span>`
+        : st.selected.map((w, i) => `
+          <button onclick="removeOrderWord('${t.id}', ${i})"
+            class="word-chip flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-secondary hover:bg-interactive-hover text-text-inverse text-heading-md shadow-md">
+            ${w}<svg class="w-4 h-4 opacity-75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+          </button>`).join("")}
     </div>
-    ${st.pool.length ? `<div class="flex flex-wrap gap-1.5 mt-2.5">
-      ${st.pool.map((w, i) => `
-        <button onclick="pickOrderWord('${t.id}', ${i})"
-          class="word-chip bg-surface border border-border-default hover:border-secondary text-text-secondary hover:text-text-primary text-caption-bold px-2.5 py-1.5 rounded-lg shadow-sm">${w}</button>`).join("")}
+
+    ${st.pool.length ? `
+    <!-- Банк слів -->
+    <div class="p-3 sm:p-4 bg-surface border-2 border-border-default rounded-2xl shadow-sm mb-3">
+      <div class="flex items-center justify-between gap-2 mb-2.5">
+        <span class="flex items-center gap-1.5 text-caption-bold uppercase tracking-wider text-text-muted">
+          <svg class="w-4 h-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>
+          Банк слів
+        </span>
+        <span class="text-micro text-text-muted">Натисніть, щоб додати</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2.5">
+        ${st.pool.map((w, i) => `
+          <button onclick="pickOrderWord('${t.id}', ${i})"
+            class="word-chip px-3.5 py-2 rounded-xl bg-surface-subtle hover:bg-secondary hover:text-text-inverse text-text-primary text-heading-md border border-border-default hover:border-secondary shadow-sm transition-all">${w}</button>`).join("")}
+      </div>
     </div>` : ""}
+
+    <button onclick="checkOrderItem('${t.id}')" class="${BTN_CHECK}">Перевірити</button>
     ${feedbackHtml(t.id, isDone ? "done" : null, isDone ? "Правильно: " + t.answer : "")}`;
 }
 
@@ -422,7 +437,10 @@ function fillGapRow(row, t) {
         placeholder="Впишіть відповідь…" oninput="gapDraft['${t.id}'] = this.value"
         onkeydown="if(event.key==='Enter') checkGapItem('${t.id}')"
         class="flex-1 min-w-[200px] max-w-sm px-3 py-2 text-body-base bg-surface border border-border-input rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary transition">
-      <button onclick="checkGapItem('${t.id}')" class="${BTN_CHECK}">Перевірити</button>
+      <button onclick="checkGapItem('${t.id}')" class="${BTN_CHECK} flex items-center gap-2">
+        Перевірити
+        <kbd class="hidden sm:inline px-1.5 py-0.5 rounded bg-surface/20 text-micro font-mono">↵</kbd>
+      </button>
     </div>
     ${feedbackHtml(t.id, isDone ? "done" : null, isDone ? t.explanation : "")}`;
 }
@@ -470,9 +488,9 @@ function fillChoiceRow(row, t) {
   const isDone = solvedState[t.id];
   const shell = rowShell(t, `
     <p class="text-body-base text-text-body leading-loose">
-      ${t.before || ""}<span class="inline-flex gap-1 mx-1 align-middle">${t.options.map(opt => `<button onclick="checkChoiceItem('${t.id}', '${opt.replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-body-semibold rounded-lg border transition ${isDone && opt === t.correct
-        ? "bg-success-emphasis text-text-inverse border-success-emphasis"
-        : "bg-surface text-text-secondary border-border-default hover:border-secondary hover:text-secondary"}">${opt}</button>`).join("")}</span>${afterText(t.after)}
+      ${t.before || ""}<span class="inline-flex gap-1 mx-1 align-middle">${t.options.map(opt => `<button onclick="checkChoiceItem('${t.id}', '${opt.replace(/'/g, "\\'")}')" class="px-3 py-1.5 text-body-semibold rounded-xl border-2 transition-all ${isDone && opt === t.correct
+        ? "bg-success-emphasis text-text-inverse border-success-emphasis shadow-sm"
+        : "bg-surface text-text-secondary border-border-default hover:border-secondary hover:text-secondary hover:shadow-sm"}">${opt}</button>`).join("")}</span>${afterText(t.after)}
     </p>`);
   row.className = shell.cls;
   row.innerHTML = shell.html + feedbackHtml(t.id, isDone ? "done" : null, isDone ? t.explanation : "");
@@ -501,9 +519,9 @@ function fillCrossRow(row, t) {
     <div class="flex flex-wrap items-center gap-1.5">
       ${t.words.map((w, i) => `
         <button onclick="checkCrossItem('${t.id}', ${i})"
-          class="word-chip px-2.5 py-1.5 rounded-lg text-body-medium border transition ${isDone && i === t.extraIndex
+          class="word-chip px-3 py-2 rounded-xl text-body-medium border-2 transition-all ${isDone && i === t.extraIndex
             ? "strike-word font-semibold"
-            : "bg-surface border-border-default text-text-body hover:border-error hover:text-error"}">${w}</button>`).join("")}
+            : "bg-surface border-border-default text-text-body hover:border-error hover:text-error hover:shadow-sm"}">${w}</button>`).join("")}
     </div>
     ${feedbackHtml(t.id, isDone ? "done" : null, isDone ? t.explanation : "")}`;
 }
@@ -528,12 +546,22 @@ function fillAbcdRow(row, t) {
   row.className = shell.cls;
   row.innerHTML = `
     ${shell.html}
-    <div class="grid sm:grid-cols-2 gap-2">
-      ${t.options.map((opt, i) => `
+    <div class="grid sm:grid-cols-2 gap-2.5">
+      ${t.options.map((opt, i) => {
+        const right = isDone && i === t.correct;
+        return `
         <button onclick="checkAbcdItem('${t.id}', ${i})"
-          class="text-left px-3 py-2.5 rounded-xl text-body-medium border transition ${isDone && i === t.correct
-            ? "bg-success-emphasis text-text-inverse border-success-emphasis font-semibold"
-            : "bg-surface border-border-default text-text-secondary hover:border-secondary hover:text-text-primary"}">${opt}</button>`).join("")}
+          class="group flex items-start gap-3 text-left p-3.5 rounded-2xl border-2 transition-all ${right
+            ? "bg-success-surface border-success-emphasis shadow-md"
+            : "bg-surface border-border-default hover:border-secondary hover:shadow-md"}">
+          <span class="flex items-center justify-center w-5 h-5 rounded-full shrink-0 mt-0.5 transition-colors ${right
+            ? "bg-success-emphasis text-text-inverse"
+            : "border-2 border-border-default group-hover:border-secondary"}">
+            ${right ? '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ""}
+          </span>
+          <span class="text-body-medium ${right ? "text-success-emphasis font-semibold" : "text-text-secondary group-hover:text-text-primary"}">${opt}</span>
+        </button>`;
+      }).join("")}
     </div>
     ${feedbackHtml(t.id, isDone ? "done" : null, isDone ? t.explanation : "")}`;
 }
