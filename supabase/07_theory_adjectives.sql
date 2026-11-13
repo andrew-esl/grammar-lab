@@ -6,7 +6,7 @@
 begin;
 
 insert into public.theory_blocks (topic_id, block_key, title, level, kind, content_json, content_html, position)
-select id, $g0$th_hero$g0$, $g1$Прикметники$g1$, $g2$elementary$g2$, $g3$hero$g3$, $g4${"title":"Adjectives","chips":["Англійська граматика","Прикметники","5 кроків"],"lead":"Слова, що описують іменник. В англійській вони не змінюються за числом і мають <b>строгий порядок</b>, коли їх кілька поспіль.","diagramTitle":"Скелет іменникової групи","diagram":[{"role":"думка","label":"lovely","tone":"opinion"},{"role":"факти","label":"old · red · Swiss","tone":"colour"},{"role":"іменник","label":"clock","tone":"noun"}],"diagramNote":"Opinion → Fact → Noun"}$g4$::jsonb, null, 0
+select id, $g0$th_hero$g0$, $g1$Прикметники$g1$, $g2$elementary$g2$, $g3$hero$g3$, $g4${"title":"Adjectives","chips":["Англійська граматика","Прикметники"],"lead":"Слова, що описують іменник. В англійській вони не змінюються за числом і мають <b>строгий порядок</b>, коли їх кілька поспіль.","diagramTitle":"Скелет іменникової групи","diagram":[{"role":"думка","label":"lovely","tone":"opinion"},{"role":"факти","label":"old · red · Swiss","tone":"colour"},{"role":"іменник","label":"clock","tone":"noun"}],"diagramNote":"Opinion → Fact → Noun"}$g4$::jsonb, null, 0
 from public.topics where slug = $g5$adjectives$g5$
 on conflict (topic_id, block_key) do update set
   title = excluded.title, level = excluded.level, kind = excluded.kind,

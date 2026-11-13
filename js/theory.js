@@ -49,14 +49,21 @@ const sectionHeader = (kicker, title, lead) => `
   <div class="mb-5">
     ${kicker ? `<div class="text-caption-bold uppercase tracking-wider text-secondary mb-1.5">${esc(kicker)}</div>` : ""}
     <h2 class="text-display-title font-bold text-text-primary tracking-tight">${esc(title)}</h2>
-    ${lead ? `<p class="text-body-base text-text-muted mt-1.5 max-w-2xl">${esc(lead)}</p>` : ""}
+    ${lead ? `<p class="text-body-base text-text-muted mt-1.5 max-w-2xl">${lead}</p>` : ""}
   </div>`;
 
 // ---------- типи блоків ----------
 
-function renderHero(b, topic, stats) {
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+function renderHero(b, topic, stats, totalSteps) {
   const d = b.data || {};
-  const chips = (d.chips || []).map(c =>
+  const chips = [...(d.chips || []), `${totalSteps} ${plural(totalSteps, "крок", "кроки", "кроків")}`].map(c =>
     `<span class="text-micro font-semibold px-2.5 py-1 rounded-full bg-interactive-subtle text-secondary">${esc(c)}</span>`).join("");
   const diagram = (d.diagram || []).map((row, i) => `
     ${i ? '<div class="text-text-tertiary text-center text-caption-bold">+</div>' : ""}
@@ -90,6 +97,38 @@ function renderHero(b, topic, stats) {
         </div>` : ""}
       </div>
     </section>`;
+}
+
+// Таблиця пар «однина → множина» (або будь-яких інших двох форм).
+function renderPairs(b, idx, total) {
+  const d = b.data || {};
+  const groups = (d.groups || []).map(g => `
+    <div class="bg-surface border border-border-default rounded-2xl overflow-hidden">
+      <div class="px-4 py-2.5 bg-surface-subtle border-b border-border-default flex items-center justify-between gap-2">
+        <span class="text-caption-bold uppercase tracking-wider text-text-secondary">${esc(g.title)}</span>
+        ${g.note ? `<span class="text-micro text-text-muted">${esc(g.note)}</span>` : ""}
+      </div>
+      <div class="divide-y divide-border-default">
+        ${(g.items || []).map(([a, bb]) => `
+          <div class="flex items-center gap-2 px-4 py-2 hover:bg-surface-subtle transition">
+            <code class="font-mono text-body-sm text-text-secondary flex-1">${esc(a)}</code>
+            <svg class="w-3.5 h-3.5 text-text-tertiary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <code class="font-mono text-body-sm font-semibold text-text-primary flex-1 text-right sm:text-left">${esc(bb)}</code>
+            ${speakBtn(bb)}
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
+
+  const notes = (d.notes || []).map(n => `
+    <div class="flex items-start gap-2.5 bg-warning-surface border border-warning-border rounded-xl px-3.5 py-3">
+      <svg class="w-4 h-4 text-warning shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <p class="text-body-sm text-text-secondary leading-relaxed">${n}</p>
+    </div>`).join("");
+
+  return `
+    ${sectionHeader(`Крок ${idx} / ${total} · ${d.kicker || "Винятки"}`, b.title, d.lead)}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${groups}</div>
+    ${notes ? `<div class="space-y-2 mt-3">${notes}</div>` : ""}`;
 }
 
 function renderCases(b, idx, total) {
@@ -275,9 +314,8 @@ function renderTheoryPage(topic, blocks, stats) {
 
   const steps = [];
   const parts = [];
-  if (hero) parts.push(renderHero(hero, topic, stats));
-
   const totalSteps = rich.length + (stats.total ? 1 : 0) + (deeper.length ? 1 : 0);
+  if (hero) parts.push(renderHero(hero, topic, stats, totalSteps));
   let n = 0;
 
   for (const b of rich) {
@@ -287,6 +325,7 @@ function renderTheoryPage(topic, blocks, stats) {
     const body = b.kind === "cases" ? renderCases(b, i + 1, totalSteps)
       : b.kind === "formula" ? renderFormula(b, i + 1, totalSteps)
       : b.kind === "traps" ? renderTraps(b, i + 1, totalSteps)
+      : b.kind === "pairs" ? renderPairs(b, i + 1, totalSteps)
       : renderProse(b);
     parts.push(`<section id="step-${i}" class="scroll-mt-36 mb-10">${body}</section>`);
   }
