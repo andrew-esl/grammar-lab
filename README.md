@@ -28,6 +28,9 @@ supabase/               SQL-скрипти та серверна функція
 3. `03_make_me_teacher.sql` — зробити свій акаунт викладачем
 4. `04_attempts_delete_policy.sql` — хто може стирати історію спроб
 5. `05_teacher_cabinet.sql` — захист ролі, email у профілях
+6. `06_theory_structure.sql` — структура блоків теорії (kind, content_json)
+7. `07`–`10_theory_*.sql` — теорія у кроковому форматі: прикметники, іменники, прислівники, артиклі
+   (спочатку `08`, бо він розширює список типів блоків; повторний запуск безпечний)
 
 Потім **Edge Functions → Deploy a new function → Via Editor**, назва `admin-users`,
 вміст — `supabase/functions/admin-users/index.ts`. У налаштуваннях функції вимкнути
