@@ -505,7 +505,7 @@ function fillChoiceRow(row, t) {
   const isDone = solvedState[t.id];
   const shell = rowShell(t, `
     <p class="text-body-base text-text-body leading-loose">
-      ${t.before || ""}<span class="inline-flex gap-1 mx-1 align-middle">${t.options.map(opt => `<button onclick="checkChoiceItem('${t.id}', '${opt.replace(/'/g, "\\'")}')" class="px-3 py-1.5 text-body-semibold rounded-xl border-2 transition-all ${isDone && opt === t.correct
+      ${t.before || ""}<span class="inline-flex flex-wrap gap-1 mx-1 align-middle">${t.options.map(opt => `<button onclick="checkChoiceItem('${t.id}', '${opt.replace(/'/g, "\\'")}')" class="px-3 py-1.5 text-body-semibold rounded-xl border-2 transition-all ${isDone && opt === t.correct
         ? "bg-success-emphasis text-text-inverse border-success-emphasis shadow-sm"
         : "bg-surface text-text-secondary border-border-default hover:border-secondary hover:text-secondary hover:shadow-sm"}">${opt}</button>`).join("")}</span>${afterText(t.after)}
     </p>`);
