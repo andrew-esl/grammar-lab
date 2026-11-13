@@ -66,7 +66,7 @@ function renderHero(b, topic, stats, totalSteps) {
   const chips = [...(d.chips || []), `${totalSteps} ${plural(totalSteps, "крок", "кроки", "кроків")}`].map(c =>
     `<span class="text-micro font-semibold px-2.5 py-1 rounded-full bg-interactive-subtle text-secondary">${esc(c)}</span>`).join("");
   const diagram = (d.diagram || []).map((row, i) => `
-    ${i ? '<div class="text-text-tertiary text-center text-caption-bold">+</div>' : ""}
+    ${i ? `<div class="text-text-tertiary text-center text-caption-bold">${esc(d.diagramJoin || "+")}</div>` : ""}
     <div class="rounded-xl border ${tone(row.tone).chip} px-3 py-2 text-center">
       <div class="text-micro uppercase tracking-wider opacity-80">${esc(row.role || "")}</div>
       <div class="font-mono text-body-semibold">${esc(row.label)}</div>
@@ -114,7 +114,7 @@ function renderPairs(b, idx, total) {
             <code class="font-mono text-body-sm text-text-secondary flex-1">${esc(a)}</code>
             <svg class="w-3.5 h-3.5 text-text-tertiary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             <code class="font-mono text-body-sm font-semibold text-text-primary flex-1 text-right sm:text-left">${esc(bb)}</code>
-            ${speakBtn(bb)}
+            ${/[a-z]/i.test(bb) ? speakBtn(bb) : '<span class="w-7 shrink-0"></span>'}
           </div>`).join("")}
       </div>
     </div>`).join("");

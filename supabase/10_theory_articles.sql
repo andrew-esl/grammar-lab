@@ -10,7 +10,7 @@ alter table public.theory_blocks add constraint theory_blocks_kind_check
   check (kind in ('prose', 'hero', 'cases', 'formula', 'traps', 'pairs'));
 
 insert into public.theory_blocks (topic_id, block_key, title, level, kind, content_json, content_html, position)
-select id, $g0$th_hero$g0$, $g1$Артиклі$g1$, $g2$elementary$g2$, $g3$hero$g3$, $g4${"title":"Articles","chips":["Англійська граматика","Артиклі"],"lead":"Маленькі слова <b>a/an</b> і <b>the</b> (або їх відсутність) показують, чи знає співрозмовник, про що йдеться. В українській артиклів немає, тому тут найбільше помилок.","diagramTitle":"Який артикль потрібен","diagram":[{"role":"вперше","label":"a / an","tone":"opinion"},{"role":"уже відомо","label":"the","tone":"colour"},{"role":"загалом","label":"— (нуль)","tone":"neutral"}],"diagramNote":"a sandwich → the sandwich · dogs"}$g4$::jsonb, null, 0
+select id, $g0$th_hero$g0$, $g1$Артиклі$g1$, $g2$elementary$g2$, $g3$hero$g3$, $g4${"title":"Articles","chips":["Англійська граматика","Артиклі"],"lead":"Маленькі слова <b>a/an</b> і <b>the</b> (або їх відсутність) показують, чи знає співрозмовник, про що йдеться. В українській артиклів немає, тому тут найбільше помилок.","diagramTitle":"Який артикль потрібен","diagram":[{"role":"вперше","label":"a / an","tone":"opinion"},{"role":"уже відомо","label":"the","tone":"colour"},{"role":"загалом","label":"— (нуль)","tone":"neutral"}],"diagramJoin":"або","diagramNote":"a sandwich → the sandwich · dogs"}$g4$::jsonb, null, 0
 from public.topics where slug = $g5$articles$g5$
 on conflict (topic_id, block_key) do update set
   title = excluded.title, level = excluded.level, kind = excluded.kind,
