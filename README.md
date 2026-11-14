@@ -34,6 +34,7 @@ supabase/               SQL-скрипти та серверна функція
 8. `11_modal_verbs.sql`, `12_pronouns.sql`, `13_verbals.sql`, `14_comparisons.sql` — нові теми повністю: тема, теорія у кроковому форматі й вправи.
    Id вправ мають префікс теми (`modal_`, `pron_`, `verb_`), щоб не перетнутися з наявними.
 9. `15_exercise_groups.sql` — єдиний зведений файл: групує вправи всіх тем за номерами з підручника («Exercise N»), розбиває кожну тему на підтеми (колонки `topics.subtopics`, `theory_blocks.subtopic`, `exercises.subtopic`) і ділить Verbals на три окремі теми — Infinitive, Gerund, Participle (призначення учням копіюються). В кінці виводить контрольні таблиці. Можна запускати повторно.
+10. `16_conditionals.sql`, `17_reported_speech.sql` — теми «Умовні речення, Wishes, Unreal Past» і «Непряма мова»: теорія, вправи та підтеми. Потребують `15_exercise_groups.sql` (колонки підтем додаються й тут, тож порядок не критичний). Повторний запуск безпечний.
 
 Потім **Edge Functions → Deploy a new function → Via Editor**, назва `admin-users`,
 вміст — `supabase/functions/admin-users/index.ts`. У налаштуваннях функції вимкнути
