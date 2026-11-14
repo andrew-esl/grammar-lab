@@ -32,8 +32,8 @@ supabase/               SQL-скрипти та серверна функція
 7. `07`–`10_theory_*.sql` — теорія у кроковому форматі: прикметники, іменники, прислівники, артиклі
    (спочатку `08`, бо він розширює список типів блоків; повторний запуск безпечний)
 8. `11_modal_verbs.sql`, `12_pronouns.sql`, `13_verbals.sql`, `14_comparisons.sql` — нові теми повністю: тема, теорія у кроковому форматі й вправи.
-9. `15_exercise_groups.sql` — групує вправи Adjectives, Adverbs і Nouns за номерами з підручника («Exercise N»).
    Id вправ мають префікс теми (`modal_`, `pron_`, `verb_`), щоб не перетнутися з наявними.
+9. `15_exercise_groups.sql` — групує вправи Adjectives, Adverbs і Nouns за номерами з підручника («Exercise N»).
 
 Потім **Edge Functions → Deploy a new function → Via Editor**, назва `admin-users`,
 вміст — `supabase/functions/admin-users/index.ts`. У налаштуваннях функції вимкнути
