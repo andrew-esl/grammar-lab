@@ -208,15 +208,57 @@ function levelBadge(level) {
 }
 
 // ---------- вправи ----------
+// Вправи показуємо так, як у підручнику: окремими блоками «Exercise N».
+// Якщо в вправи є поле group — вона потрапляє у свій блок (з інструкцією з книги),
+// решта лишаються, як раніше, згрупованими за типом механіки.
+function sectionKeyOf(item, type) {
+  const g = item.group;
+  return (g !== undefined && g !== null && g !== "") ? "g" + String(g).replace(/[^\w-]/g, "_") : type;
+}
+
+function buildSections(topicKey) {
+  const exercises = TOPICS_DATA[topicKey].exercises;
+  const byKey = new Map();
+  for (const g of GROUPS) {
+    for (const item of (exercises[g.type] || [])) {
+      if (!shouldShowLevel(item.level)) continue;
+      const key = sectionKeyOf(item, g.type);
+      if (!byKey.has(key)) {
+        byKey.set(key, key === g.type
+          ? { ...g, key, entries: [] }
+          : { key, grouped: true, group: item.group, gord: item.gord, title: item.groupTitle || ("Exercise " + item.group), hint: item.instruction || "", entries: [] });
+      }
+      const sec = byKey.get(key);
+      if (sec.grouped && !sec.hint && item.instruction) sec.hint = item.instruction;
+      sec.entries.push({ item, type: g.type });
+    }
+  }
+  const all = [...byKey.values()];
+  // Блоки з літерами (A, B…) ідуть перед нумерованими (1, 2…), далі за номером
+  const isNum = x => /^\d/.test(String(x.group));
+  // gord (необов'язкове число в payload) прямо задає порядок блоків, як у книзі
+  const grouped = all.filter(x => x.grouped)
+    .sort((x, y) => ((x.gord ?? 1e9) - (y.gord ?? 1e9))
+      || (isNum(x) - isNum(y))
+      || String(x.group).localeCompare(String(y.group), undefined, { numeric: true }));
+  // всередині блоку пункти йдуть за номером з книги (no), якщо він є в усіх вправах
+  for (const sec of grouped) {
+    if (sec.entries.every(e => e.item.no !== undefined && e.item.no !== null)) {
+      sec.entries = sec.entries
+        .map((e, i) => ({ e, i }))
+        .sort((a, b) => String(a.e.item.no).localeCompare(String(b.e.item.no), undefined, { numeric: true }) || a.i - b.i)
+        .map(x => x.e);
+    }
+  }
+  return [...grouped, ...all.filter(x => !x.grouped)];
+}
+
 function renderTopicExercises() {
   const list = document.getElementById("exercises-list");
   const aside = document.getElementById("practice-aside");
-  const exercises = TOPICS_DATA[currentTopic].exercises;
   list.innerHTML = "";
 
-  const present = GROUPS
-    .map(g => ({ ...g, items: (exercises[g.type] || []).filter(i => shouldShowLevel(i.level)) }))
-    .filter(g => g.items.length);
+  const present = buildSections(currentTopic);
 
   if (!present.length) {
     list.innerHTML = emptyCard("Вправ поки немає",
@@ -230,28 +272,40 @@ function renderTopicExercises() {
 }
 
 function renderExerciseGroup(container, g) {
-  const done = g.items.filter(i => solvedState[i.id]).length;
+  const done = g.entries.filter(e => solvedState[e.item.id]).length;
   const card = document.createElement("section");
-  card.id = "ex-group-" + g.type;
+  card.id = "ex-group-" + g.key;
   card.className = "bg-surface border border-border-default rounded-2xl shadow-sm overflow-hidden scroll-mt-24";
   card.innerHTML = `
     <div class="px-5 sm:px-6 py-4 border-b border-border-default flex items-center justify-between gap-3">
-      <div>
+      <div class="min-w-0">
         <h3 class="text-heading-md font-semibold text-text-primary">${g.title}</h3>
-        <p class="text-caption-xs text-text-muted mt-0.5">${g.hint}</p>
+        <p class="text-caption-xs text-text-muted mt-0.5">${esc(g.hint)}</p>
       </div>
-      <span class="shrink-0 text-caption-bold px-2.5 py-1 rounded-full ${done === g.items.length
-        ? "bg-success-surface text-success-emphasis" : "bg-surface-subtle text-text-muted"}">${done}/${g.items.length}</span>
+      <span class="shrink-0 text-caption-bold px-2.5 py-1 rounded-full ${done === g.entries.length
+        ? "bg-success-surface text-success-emphasis" : "bg-surface-subtle text-text-muted"}">${done}/${g.entries.length}</span>
     </div>
-    <div id="ex-body-${g.type}" class="p-4 sm:p-5 space-y-3"></div>`;
+    <div id="ex-body-${g.key}" class="p-4 sm:p-5 space-y-3"></div>`;
   container.appendChild(card);
 
-  const body = card.querySelector(`#ex-body-${g.type}`);
-  g.items.forEach(t => {
+  const body = card.querySelector(`#ex-body-${g.key}`);
+  g.entries.forEach(({ item: t, type }, i) => {
     const row = document.createElement("div");
     row.id = "row-" + t.id;
-    fillRow(row, t, g.type);
-    body.appendChild(row);
+    fillRow(row, t, type);
+    if (g.grouped && type !== "abcd") {
+      // номер пункту, як у підручнику: t.no, якщо перший пункт у книзі — приклад (в abcd номер уже в тексті питання)
+      const wrap = document.createElement("div");
+      wrap.className = "flex items-start gap-3";
+      wrap.innerHTML = `<span class="shrink-0 min-w-7 h-7 px-1.5 mt-3.5 rounded-full bg-surface-subtle border border-border-default text-caption-bold text-text-muted flex items-center justify-center">${t.no ?? i + 1}</span>`;
+      const cell = document.createElement("div");
+      cell.className = "flex-1 min-w-0";   // ширину тримає обгортка: fillRow перезаписує className рядка
+      cell.appendChild(row);
+      wrap.appendChild(cell);
+      body.appendChild(wrap);
+    } else {
+      body.appendChild(row);
+    }
   });
 }
 
@@ -273,13 +327,13 @@ function renderPracticeAside(aside, present) {
         </div>
         <nav class="space-y-1.5">
           ${present.map(g => {
-            const d = g.items.filter(i => solvedState[i.id]).length;
-            const full = d === g.items.length;
+            const d = g.entries.filter(e => solvedState[e.item.id]).length;
+            const full = d === g.entries.length;
             return `
-              <a href="#ex-group-${g.type}" class="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg hover:bg-surface-subtle transition group">
+              <a href="#ex-group-${g.key}" class="flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg hover:bg-surface-subtle transition group">
                 <span class="text-body-sm text-text-secondary group-hover:text-text-primary">${g.title}</span>
                 <span class="text-micro font-semibold px-1.5 py-0.5 rounded-md shrink-0 ${full
-                  ? "bg-success-surface text-success-emphasis" : "bg-surface-subtle text-text-muted"}">${d}/${g.items.length}</span>
+                  ? "bg-success-surface text-success-emphasis" : "bg-surface-subtle text-text-muted"}">${d}/${g.entries.length}</span>
               </a>`;
           }).join("")}
         </nav>
@@ -304,17 +358,17 @@ function rerenderItem(itemId) {
   const row = document.getElementById("row-" + itemId);
   if (!row) return;
   fillRow(row, found.item, found.type);
-  const g = GROUPS.find(x => x.type === found.type);
-  if (g) refreshGroupCounter(g.type);
+  refreshGroupCounter(sectionKeyOf(found.item, found.type));
 }
 
-function refreshGroupCounter(type) {
-  const items = (TOPICS_DATA[currentTopic].exercises[type] || []).filter(i => shouldShowLevel(i.level));
-  const done = items.filter(i => solvedState[i.id]).length;
-  const badge = document.querySelector(`#ex-group-${type} > div > span`);
+function refreshGroupCounter(key) {
+  const sec = buildSections(currentTopic).find(x => x.key === key);
+  if (!sec) return;
+  const done = sec.entries.filter(e => solvedState[e.item.id]).length;
+  const badge = document.querySelector(`#ex-group-${key} > div > span`);
   if (badge) {
-    badge.textContent = `${done}/${items.length}`;
-    badge.className = `shrink-0 text-caption-bold px-2.5 py-1 rounded-full ${done === items.length
+    badge.textContent = `${done}/${sec.entries.length}`;
+    badge.className = `shrink-0 text-caption-bold px-2.5 py-1 rounded-full ${done === sec.entries.length
       ? "bg-success-surface text-success-emphasis" : "bg-surface-subtle text-text-muted"}`;
   }
 }
@@ -649,10 +703,7 @@ function updateProgressUI() {
   });
 
   if (currentMainTab === "practice") {
-    const exercises = TOPICS_DATA[currentTopic].exercises;
-    const present = GROUPS
-      .map(g => ({ ...g, items: (exercises[g.type] || []).filter(i => shouldShowLevel(i.level)) }))
-      .filter(g => g.items.length);
+    const present = buildSections(currentTopic);
     const aside = document.getElementById("practice-aside");
     if (aside && present.length) renderPracticeAside(aside, present);
   }
