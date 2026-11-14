@@ -9,6 +9,7 @@ let currentMainTab = "theory";
 let currentStudentLevel = "all"; // all, elementary, intermediate, advanced
 let solvedState = {};
 let orderState = {};
+let currentSub = {};   // topicKey → slug обраної підтеми
 let gapDraft = {};   // чернетки введених, але ще не перевірених відповідей у gap-полях
 
 // true  → рівень учня показує його рівень І ВСЕ, ЩО НИЖЧЕ (Advanced бачить усе)
@@ -59,6 +60,90 @@ function emptyCard(title, text) {
     <div class="text-heading-md font-semibold text-text-primary mb-1">${title}</div>
     <p class="text-body-base text-text-muted">${text}</p>
   </div>`;
+}
+
+// ==================== ПІДТЕМИ ====================
+// Тема може ділитися на підтеми (topic.subtopics). Кожен блок теорії (b.sub) і
+// кожна вправа (item.__sub) належать одній підтемі. Теми без підтем працюють як раніше.
+function topicSubs(topicKey) { return (TOPICS_DATA[topicKey] && TOPICS_DATA[topicKey].subtopics) || []; }
+
+// вправа без підтеми (наприклад, згенерована для учня) потрапляє в «змішану» підтему
+function fallbackSub(topicKey) {
+  const subs = topicSubs(topicKey);
+  const m = subs.find(s => s.mix) || subs[subs.length - 1];
+  return m ? m.slug : null;
+}
+function itemSub(topicKey, item) { return item.__sub || fallbackSub(topicKey); }
+
+function subHasTheory(topicKey, slug) {
+  return TOPICS_DATA[topicKey].theory.some(b => b.sub === slug && b.kind !== "hero" && shouldShowLevel(b.level));
+}
+
+// підтеми, у яких для цього учня щось є (вправи його рівня або теорія)
+function visibleSubs(topicKey) {
+  return topicSubs(topicKey).filter(s => getTopicCounts(topicKey, s.slug).total || subHasTheory(topicKey, s.slug));
+}
+
+function activeSub(topicKey) {
+  const subs = topicSubs(topicKey);
+  if (!subs.length) return null;
+  const vis = visibleSubs(topicKey);
+  const cur = currentSub[topicKey];
+  if (vis.some(s => s.slug === cur)) return cur;
+  return (vis[0] || subs[0]).slug;
+}
+
+// Тема, звужена до поточної підтеми: рушій далі працює з нею як зі звичайною темою.
+function topicView(topicKey) {
+  const topic = TOPICS_DATA[topicKey];
+  const sub = activeSub(topicKey);
+  if (!sub) return topic;
+  const exercises = {};
+  for (const [type, arr] of Object.entries(topic.exercises)) exercises[type] = arr.filter(it => itemSub(topicKey, it) === sub);
+  return {
+    ...topic,
+    theory: topic.theory.filter(b => b.sub === sub && b.kind !== "hero"),
+    exercises,
+    __sub: topicSubs(topicKey).find(s => s.slug === sub),
+  };
+}
+
+function selectSub(slug) {
+  currentSub[currentTopic] = slug;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  updateView();
+}
+
+function renderSubtopicBar() {
+  const bar = document.getElementById("subtopic-bar");
+  if (!bar) return;
+  const subs = visibleSubs(currentTopic);
+  if (subs.length < 2) { bar.classList.add("hidden"); bar.innerHTML = ""; return; }
+  const cur = activeSub(currentTopic);
+  const prevScroll = (bar.firstElementChild || {}).scrollLeft || 0;
+  bar.classList.remove("hidden");
+  bar.innerHTML = `
+    <div class="flex gap-2 overflow-x-auto pb-1.5 -mx-1 px-1">
+      ${subs.map((s, i) => {
+        const c = getTopicCounts(currentTopic, s.slug);
+        const on = s.slug === cur;
+        const full = c.total > 0 && c.solved === c.total;
+        return `
+        <button onclick="selectSub('${s.slug}')" data-sub="${s.slug}" title="${esc(s.description || "")}"
+          class="shrink-0 w-44 sm:w-52 text-left rounded-xl border px-3 py-2.5 transition ${on
+            ? "bg-text-primary border-text-primary text-text-inverse shadow-sm"
+            : "bg-surface border-border-default text-text-secondary hover:border-secondary hover:text-text-primary"}">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-micro font-bold uppercase tracking-wider ${on ? "text-text-inverse/60" : "text-text-tertiary"}">Підтема ${i + 1}</span>
+            ${c.total ? `<span class="text-micro font-semibold px-1.5 py-0.5 rounded-md ${full
+              ? "bg-success-surface text-success-emphasis"
+              : on ? "bg-text-inverse/15 text-text-inverse" : "bg-surface-subtle text-text-muted"}">${c.solved}/${c.total}</span>` : ""}
+          </div>
+          <div class="text-caption-bold leading-snug line-clamp-2">${esc(s.title)}</div>
+        </button>`;
+      }).join("")}
+    </div>`;
+  if (bar.firstElementChild) bar.firstElementChild.scrollLeft = prevScroll;
 }
 
 // ==================== ІНТЕРФЕЙС ТА НАВІГАЦІЯ ====================
@@ -114,6 +199,7 @@ function updateView() {
   document.getElementById("tab-btn-practice").className = isTheory ? TAB_OFF : TAB_ON;
 
   renderSidebar();
+  renderSubtopicBar();
   if (isTheory) renderTheory(); else renderTopicExercises();
   updateProgressUI();
 
@@ -149,17 +235,17 @@ function renderSidebar() {
 function renderTheory() {
   const list = document.getElementById("theory-list");
   const aside = document.getElementById("theory-aside");
-  const topic = TOPICS_DATA[currentTopic];
+  const topic = topicView(currentTopic);
   const blocks = topic.theory.filter(b => shouldShowLevel(b.level));
 
-  if (!blocks.length) {
+  if (!blocks.length && !topic.__sub) {
     list.innerHTML = emptyCard("Теорії тут немає", "Для цієї теми викладач відкрив лише вправи.");
     aside.innerHTML = "";
     initStepSpy([]);
     return;
   }
 
-  const stats = getTopicCounts(currentTopic);
+  const stats = getTopicCounts(currentTopic, topic.__sub && topic.__sub.slug);
   const page = renderTheoryPage(topic, blocks, stats);
 
   // Сторінка з кроками займає всю ширину, звичайна — дві колонки зі змістом.
@@ -217,7 +303,7 @@ function sectionKeyOf(item, type) {
 }
 
 function buildSections(topicKey) {
-  const exercises = TOPICS_DATA[topicKey].exercises;
+  const exercises = topicView(topicKey).exercises;
   const byKey = new Map();
   for (const g of GROUPS) {
     for (const item of (exercises[g.type] || [])) {
@@ -310,13 +396,14 @@ function renderExerciseGroup(container, g) {
 }
 
 function renderPracticeAside(aside, present) {
-  const c = getTopicCounts(currentTopic);
+  const sub = activeSub(currentTopic);
+  const c = getTopicCounts(currentTopic, sub);
   aside.innerHTML = `
     <div class="space-y-4">
       <div class="bg-surface border border-border-default rounded-2xl p-5 shadow-sm">
         <div class="flex items-center gap-2 mb-4">
           <svg class="w-4 h-4 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
-          <h2 class="text-heading-md font-semibold text-text-primary">Прогрес теми</h2>
+          <h2 class="text-heading-md font-semibold text-text-primary">${sub ? "Прогрес підтеми" : "Прогрес теми"}</h2>
         </div>
         <div class="flex items-baseline gap-2 mb-2">
           <span class="text-display-title font-bold text-text-primary">${c.pct}%</span>
@@ -669,11 +756,12 @@ function shouldShowLevel(itemLvl) {
     : itemLvl === currentStudentLevel;
 }
 
-function getTopicCounts(topicKey) {
+function getTopicCounts(topicKey, sub) {
   let total = 0, solved = 0;
   const exGroups = TOPICS_DATA[topicKey].exercises;
   Object.keys(exGroups).forEach(type => {
     exGroups[type].forEach(item => {
+      if (sub && itemSub(topicKey, item) !== sub) return;
       if (shouldShowLevel(item.level)) {
         total++;
         if (solvedState[item.id]) solved++;
@@ -701,6 +789,8 @@ function updateProgressUI() {
     const badge = document.getElementById("nav-pct-" + k);
     if (badge) badge.textContent = `${c.pct}%`;
   });
+
+  renderSubtopicBar();
 
   if (currentMainTab === "practice") {
     const present = buildSections(currentTopic);

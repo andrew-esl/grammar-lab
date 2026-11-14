@@ -50,9 +50,9 @@ async function apiLoadProfile() {
 // просто не потраплять у відповідь.
 async function apiLoadContent() {
   const [topics, theory, exercises] = await Promise.all([
-    fetchAll(() => sb.from("topics").select("id, slug, title, description, position").order("position").order("id")),
-    fetchAll(() => sb.from("theory_blocks").select("topic_id, block_key, title, level, kind, content_html, content_json, position").order("position").order("id")),
-    fetchAll(() => sb.from("exercises").select("id, topic_id, legacy_id, type, level, payload, position, source").order("position").order("id")),
+    fetchAll(() => sb.from("topics").select("id, slug, title, description, position, subtopics").order("position").order("id")),
+    fetchAll(() => sb.from("theory_blocks").select("topic_id, block_key, title, level, kind, content_html, content_json, position, subtopic").order("position").order("id")),
+    fetchAll(() => sb.from("exercises").select("id, topic_id, legacy_id, type, level, payload, position, source, subtopic").order("position").order("id")),
   ]);
 
   const byId = {};
@@ -63,6 +63,7 @@ async function apiLoadContent() {
       id: t.slug,
       title: t.title,
       description: t.description,
+      subtopics: Array.isArray(t.subtopics) ? t.subtopics : [],   // [{slug,title,description,mix?}]
       theory: [],
       exercises: { order: [], choice: [], gap: [], cross: [], abcd: [] },
     };
@@ -77,6 +78,7 @@ async function apiLoadContent() {
       id: b.block_key,
       title: b.title,
       level: b.level,
+      sub: b.subtopic || null,
       kind: b.kind || "prose",
       contentHtml: b.content_html,
       data: b.content_json || null,
@@ -91,6 +93,7 @@ async function apiLoadContent() {
     item.__uuid = e.id;              // справжній ключ рядка — для запису спроб
     item.level = e.level;
     item.__source = e.source;        // book | generated | manual
+    item.__sub = e.subtopic || null; // підтема всередині теми
     topic.exercises[e.type].push(item);
   }
 

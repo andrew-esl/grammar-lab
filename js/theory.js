@@ -295,7 +295,11 @@ function scrollToStep(i) {
 }
 
 function renderTheoryPage(topic, blocks, stats) {
-  const hero = blocks.find(b => b.kind === "hero");
+  let hero = blocks.find(b => b.kind === "hero");
+  // У темах з підтемами вступ збираємо з назви й опису підтеми
+  if (!hero && topic.__sub) {
+    hero = { kind: "hero", data: { title: topic.__sub.title, lead: topic.__sub.description || "", chips: [topic.title] } };
+  }
   const rich = blocks.filter(b => b.kind !== "hero" && b.kind !== "prose");
   // Блоки вище базового рівня йдуть у «Глибше» як випадні списки.
   const deeper = blocks.filter(b => b.kind === "prose" && b.level !== "elementary");
@@ -316,6 +320,10 @@ function renderTheoryPage(topic, blocks, stats) {
   const parts = [];
   const totalSteps = rich.length + (stats.total ? 1 : 0) + (deeper.length ? 1 : 0);
   if (hero) parts.push(renderHero(hero, topic, stats, totalSteps));
+  if (topic.__sub && topic.__sub.mix && !rich.length) {
+    parts.push(`<div class="bg-interactive-subtle border border-interactive-border rounded-2xl p-4 mb-8 text-body-sm text-text-secondary">
+      Це змішана практика: окремої теорії тут немає. Якщо забули правило, поверніться до попередніх підтем угорі.</div>`);
+  }
   let n = 0;
 
   for (const b of rich) {

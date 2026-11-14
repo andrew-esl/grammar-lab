@@ -33,7 +33,7 @@ supabase/               SQL-скрипти та серверна функція
    (спочатку `08`, бо він розширює список типів блоків; повторний запуск безпечний)
 8. `11_modal_verbs.sql`, `12_pronouns.sql`, `13_verbals.sql`, `14_comparisons.sql` — нові теми повністю: тема, теорія у кроковому форматі й вправи.
    Id вправ мають префікс теми (`modal_`, `pron_`, `verb_`), щоб не перетнутися з наявними.
-9. `15_exercise_groups.sql` — групує вправи Adjectives, Adverbs, Nouns, Articles і Comparisons за номерами з підручника («Exercise N»). Можна запускати повторно.
+9. `15_exercise_groups.sql` — єдиний зведений файл: групує вправи всіх тем за номерами з підручника («Exercise N»), розбиває кожну тему на підтеми (колонки `topics.subtopics`, `theory_blocks.subtopic`, `exercises.subtopic`) і ділить Verbals на три окремі теми — Infinitive, Gerund, Participle (призначення учням копіюються). В кінці виводить контрольні таблиці. Можна запускати повторно.
 
 Потім **Edge Functions → Deploy a new function → Via Editor**, назва `admin-users`,
 вміст — `supabase/functions/admin-users/index.ts`. У налаштуваннях функції вимкнути
