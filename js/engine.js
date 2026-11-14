@@ -234,8 +234,10 @@ function buildSections(topicKey) {
     }
   }
   const all = [...byKey.values()];
+  // Блоки з літерами (A, B…) ідуть перед нумерованими (1, 2…), далі за номером
+  const isNum = x => /^\d/.test(String(x.group));
   const grouped = all.filter(x => x.grouped)
-    .sort((x, y) => String(x.group).localeCompare(String(y.group), undefined, { numeric: true }));
+    .sort((x, y) => (isNum(x) - isNum(y)) || String(x.group).localeCompare(String(y.group), undefined, { numeric: true }));
   return [...grouped, ...all.filter(x => !x.grouped)];
 }
 
@@ -280,10 +282,10 @@ function renderExerciseGroup(container, g) {
     row.id = "row-" + t.id;
     fillRow(row, t, type);
     if (g.grouped && type !== "abcd") {
-      // номер пункту, як у підручнику (в abcd він уже є в тексті питання)
+      // номер пункту, як у підручнику: t.no, якщо перший пункт у книзі — приклад (в abcd номер уже в тексті питання)
       const wrap = document.createElement("div");
       wrap.className = "flex items-start gap-3";
-      wrap.innerHTML = `<span class="shrink-0 w-7 h-7 mt-3.5 rounded-full bg-surface-subtle border border-border-default text-caption-bold text-text-muted flex items-center justify-center">${i + 1}</span>`;
+      wrap.innerHTML = `<span class="shrink-0 w-7 h-7 mt-3.5 rounded-full bg-surface-subtle border border-border-default text-caption-bold text-text-muted flex items-center justify-center">${t.no ?? i + 1}</span>`;
       const cell = document.createElement("div");
       cell.className = "flex-1 min-w-0";   // ширину тримає обгортка: fillRow перезаписує className рядка
       cell.appendChild(row);
