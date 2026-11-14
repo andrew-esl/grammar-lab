@@ -226,7 +226,7 @@ function buildSections(topicKey) {
       if (!byKey.has(key)) {
         byKey.set(key, key === g.type
           ? { ...g, key, entries: [] }
-          : { key, grouped: true, group: item.group, title: "Exercise " + item.group, hint: item.instruction || "", entries: [] });
+          : { key, grouped: true, group: item.group, gord: item.gord, title: item.groupTitle || ("Exercise " + item.group), hint: item.instruction || "", entries: [] });
       }
       const sec = byKey.get(key);
       if (sec.grouped && !sec.hint && item.instruction) sec.hint = item.instruction;
@@ -236,8 +236,20 @@ function buildSections(topicKey) {
   const all = [...byKey.values()];
   // Блоки з літерами (A, B…) ідуть перед нумерованими (1, 2…), далі за номером
   const isNum = x => /^\d/.test(String(x.group));
+  // gord (необов'язкове число в payload) прямо задає порядок блоків, як у книзі
   const grouped = all.filter(x => x.grouped)
-    .sort((x, y) => (isNum(x) - isNum(y)) || String(x.group).localeCompare(String(y.group), undefined, { numeric: true }));
+    .sort((x, y) => ((x.gord ?? 1e9) - (y.gord ?? 1e9))
+      || (isNum(x) - isNum(y))
+      || String(x.group).localeCompare(String(y.group), undefined, { numeric: true }));
+  // всередині блоку пункти йдуть за номером з книги (no), якщо він є в усіх вправах
+  for (const sec of grouped) {
+    if (sec.entries.every(e => e.item.no !== undefined && e.item.no !== null)) {
+      sec.entries = sec.entries
+        .map((e, i) => ({ e, i }))
+        .sort((a, b) => String(a.e.item.no).localeCompare(String(b.e.item.no), undefined, { numeric: true }) || a.i - b.i)
+        .map(x => x.e);
+    }
+  }
   return [...grouped, ...all.filter(x => !x.grouped)];
 }
 
@@ -285,7 +297,7 @@ function renderExerciseGroup(container, g) {
       // номер пункту, як у підручнику: t.no, якщо перший пункт у книзі — приклад (в abcd номер уже в тексті питання)
       const wrap = document.createElement("div");
       wrap.className = "flex items-start gap-3";
-      wrap.innerHTML = `<span class="shrink-0 w-7 h-7 mt-3.5 rounded-full bg-surface-subtle border border-border-default text-caption-bold text-text-muted flex items-center justify-center">${t.no ?? i + 1}</span>`;
+      wrap.innerHTML = `<span class="shrink-0 min-w-7 h-7 px-1.5 mt-3.5 rounded-full bg-surface-subtle border border-border-default text-caption-bold text-text-muted flex items-center justify-center">${t.no ?? i + 1}</span>`;
       const cell = document.createElement("div");
       cell.className = "flex-1 min-w-0";   // ширину тримає обгортка: fillRow перезаписує className рядка
       cell.appendChild(row);
