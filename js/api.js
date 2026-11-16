@@ -65,7 +65,7 @@ async function apiLoadContent() {
       description: t.description,
       subtopics: Array.isArray(t.subtopics) ? t.subtopics : [],   // [{slug,title,description,mix?}]
       theory: [],
-      exercises: { order: [], choice: [], gap: [], cross: [], abcd: [] },
+      exercises: { order: [], choice: [], gap: [], cross: [], abcd: [], translate: [] },
     };
     byId[t.id] = topic;
     data[t.slug] = topic;
