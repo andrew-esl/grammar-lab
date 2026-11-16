@@ -66,6 +66,7 @@ async function bootApp() {
   cab.classList.toggle("flex", isTeacher);
   // Рівень учня задає викладач у кабінеті; самому учневі перемикач лише заважав би.
   document.getElementById("level-filter-box").classList.toggle("hidden", !isTeacher);
+  document.getElementById("topic-order-box").classList.toggle("hidden", !isTeacher);
 
   try {
     await loadDataAndRender();

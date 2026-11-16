@@ -61,6 +61,8 @@ async function apiLoadContent() {
   for (const t of topics) {
     const topic = {
       id: t.slug,
+      __rowId: t.id,                 // справжній id рядка — потрібен, щоб зберегти порядок
+      __pos: t.position,
       title: t.title,
       description: t.description,
       subtopics: Array.isArray(t.subtopics) ? t.subtopics : [],   // [{slug,title,description,mix?}]
@@ -129,4 +131,23 @@ async function apiResetTopicProgress(exerciseUuids) {
     .eq("student_id", CURRENT_PROFILE.id)
     .in("exercise_id", exerciseUuids);
   if (error) throw error;
+}
+
+// Зберігає порядок тем (лише викладач: політика topics_write у базі).
+// order — масив slug у новому порядку; позиції стають 1..N, пишемо лише змінені.
+async function apiSaveTopicOrder(order) {
+  const jobs = [];
+  order.forEach((slug, i) => {
+    const t = TOPICS_DATA[slug];
+    if (!t || !t.__rowId || t.__pos === i + 1) return;
+    jobs.push({ t, pos: i + 1 });
+  });
+  const results = await Promise.all(jobs.map(j =>
+    sb.from("topics").update({ position: j.pos }).eq("id", j.t.__rowId).select("id")));
+  for (const r of results) {
+    if (r.error) throw r.error;
+    // політика безпеки мовчки відсікає чужі записи: порожня відповідь = не збережено
+    if (Array.isArray(r.data) && r.data.length === 0) throw new Error("Немає прав змінювати порядок тем.");
+  }
+  jobs.forEach(j => { j.t.__pos = j.pos; });
 }
