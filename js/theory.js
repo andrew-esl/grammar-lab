@@ -7,14 +7,14 @@
 // викладачем рівня, сюди взагалі не доходить — його відсікає база.
 
 const THEORY_TONES = {
-  opinion:  { chip: "bg-indigo-50 text-indigo-700 border-indigo-200", dot: "bg-indigo-500" },
-  size:     { chip: "bg-sky-50 text-sky-700 border-sky-200",          dot: "bg-sky-500" },
-  age:      { chip: "bg-teal-50 text-teal-700 border-teal-200",       dot: "bg-teal-500" },
-  colour:   { chip: "bg-amber-50 text-amber-800 border-amber-200",    dot: "bg-amber-500" },
-  origin:   { chip: "bg-rose-50 text-rose-700 border-rose-200",       dot: "bg-rose-500" },
-  material: { chip: "bg-violet-50 text-violet-700 border-violet-200", dot: "bg-violet-500" },
-  noun:     { chip: "bg-slate-100 text-slate-700 border-slate-300",   dot: "bg-slate-500" },
-  neutral:  { chip: "bg-surface-subtle text-text-secondary border-border-default", dot: "bg-text-tertiary" },
+  noun:     { chip: "bg-white text-text-primary border-border-input",                     dot: "bg-text-muted" },
+  colour:   { chip: "bg-interactive-subtle text-interactive-text border-interactive-border", dot: "bg-secondary" },
+  origin:   { chip: "bg-sand-surface text-sand-text border-sand-border",                    dot: "bg-sand" },
+  opinion:  { chip: "bg-lilac-surface text-lilac-text border-lilac-border",                  dot: "bg-lilac" },
+  size:     { chip: "bg-seafoam-surface text-seafoam-text border-seafoam-border",              dot: "bg-seafoam" },
+  age:      { chip: "bg-sage-surface text-sage-text border-sage-border",                    dot: "bg-sage" },
+  material: { chip: "bg-error-surface text-error-emphasis border-error-border",           dot: "bg-error" },
+  neutral:  { chip: "bg-surface-subtle text-text-secondary border-border-default",        dot: "bg-text-tertiary" },
 };
 const tone = t => THEORY_TONES[t] || THEORY_TONES.neutral;
 
@@ -61,40 +61,69 @@ function plural(n, one, few, many) {
   return many;
 }
 
+// Заголовок вступу: назва часу чи теми крупно, останнє слово акцентним кольором;
+// усе, що після двокрапки, стає підзаголовком.
+function heroTitleHtml(full) {
+  const [main, ...rest] = String(full || "").split(":");
+  const words = main.trim().split(/\s+/);
+  const last = words.pop();
+  const lead = words.length ? esc(words.join(" ")) + " " : "";
+  const sub = rest.join(":").trim();
+  return `<h1 class="font-display text-4xl sm:text-5xl font-bold text-text-primary tracking-tight leading-[1.08]">${lead}<span class="text-secondary">${esc(last)}</span></h1>`
+    + (sub ? `<p class="font-display text-xl sm:text-2xl font-semibold text-text-secondary mt-2 leading-snug">${esc(sub)}</p>` : "");
+}
+
+// Стопка «таблеток»: кожен рядок формули накладається на попередній, як на макеті.
+function heroPills(d) {
+  const rows = d.diagram || [];
+  if (!rows.length) return "";
+  const n = rows.length;
+  const pills = rows.map((row, i) => {
+    const w = n === 1 ? 100 : Math.round(72 + (28 * i) / (n - 1));
+    const rot = n === 1 ? 0 : (i % 2 ? 1.2 : -1.2);
+    return `<div class="relative mx-auto rounded-[2rem] border-2 px-5 text-center shadow-sm ${tone(row.tone).chip} ${i ? "-mt-7 pt-9 pb-4" : "py-4"}"
+      style="width:${w}%;transform:rotate(${rot}deg);z-index:${n - i}">
+      <div class="text-micro uppercase tracking-wider opacity-80">${i + 1}. ${esc(row.role || "")}</div>
+      <div class="font-mono text-heading-md font-semibold mt-0.5">${esc(row.label)}</div>
+    </div>`;
+  }).join("");
+  const join = rows.map(r => r.role).filter(Boolean).join(` ${d.diagramJoin || "+"} `);
+  return `
+    <div class="rounded-3xl bg-gradient-to-br from-surface-container to-surface-subtle border border-border-default p-6 sm:p-8">
+      ${d.diagramTitle ? `<div class="text-caption-bold uppercase tracking-wider text-text-muted mb-4 text-center">${esc(d.diagramTitle)}</div>` : ""}
+      <div class="flex flex-col">${pills}</div>
+      <div class="flex justify-center mt-6">
+        <span class="font-display bg-white border border-border-default rounded-full px-5 py-2 text-body-semibold text-text-primary shadow-sm">${esc(join)}</span>
+      </div>
+      ${d.diagramNote ? `<p class="text-caption-xs text-text-muted text-center mt-3">${d.diagramNote}</p>` : ""}
+    </div>`;
+}
+
 function renderHero(b, topic, stats, totalSteps) {
   const d = b.data || {};
-  const chips = [...(d.chips || []), `${totalSteps} ${plural(totalSteps, "крок", "кроки", "кроків")}`].map(c =>
-    `<span class="text-micro font-semibold px-2.5 py-1 rounded-full bg-interactive-subtle text-secondary">${esc(c)}</span>`).join("");
-  const diagram = (d.diagram || []).map((row, i) => `
-    ${i ? `<div class="text-text-tertiary text-center text-caption-bold">${esc(d.diagramJoin || "+")}</div>` : ""}
-    <div class="rounded-xl border ${tone(row.tone).chip} px-3 py-2 text-center">
-      <div class="text-micro uppercase tracking-wider opacity-80">${esc(row.role || "")}</div>
-      <div class="font-mono text-body-semibold">${esc(row.label)}</div>
-    </div>`).join("");
+  const chips = [...(d.chips || []), `${totalSteps} ${plural(totalSteps, "крок", "кроки", "кроків")}`].map((c, i) =>
+    i === 0
+      ? `<span class="text-caption-xs font-bold px-3 py-1.5 rounded-full bg-interactive-subtle text-interactive-text border border-interactive-border">${esc(c)}</span>`
+      : `<span class="text-caption-xs font-semibold px-3 py-1.5 rounded-full bg-surface-container text-text-secondary">${esc(c)}</span>`).join("");
 
   return `
-    <section class="bg-surface border border-border-default rounded-2xl p-6 sm:p-8 shadow-sm mb-8">
-      <div class="grid lg:grid-cols-2 gap-6 items-center">
+    <section class="bg-surface border border-border-default rounded-3xl p-6 sm:p-10 shadow-md mb-8">
+      <div class="grid lg:grid-cols-2 gap-8 items-center">
         <div>
-          <div class="flex flex-wrap gap-1.5 mb-3">${chips}</div>
-          <h1 class="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight leading-tight">${esc(d.title || topic.title)}</h1>
-          <p class="text-body-base text-text-secondary mt-3 max-w-xl leading-relaxed">${d.lead || ""}</p>
-          <div class="flex flex-wrap gap-2 mt-5">
-            <button onclick="scrollToStep(0)" class="flex items-center gap-2 bg-text-primary hover:bg-secondary text-text-inverse text-body-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
+          <div class="flex flex-wrap gap-2 mb-5">${chips}</div>
+          ${heroTitleHtml(d.title || topic.title)}
+          <p class="text-body-base sm:text-heading-md sm:font-normal text-text-muted mt-4 max-w-xl leading-relaxed">${d.lead || ""}</p>
+          <div class="flex flex-wrap gap-3 mt-7">
+            <button onclick="scrollToStep(0)" class="flex items-center gap-2 bg-text-primary hover:bg-secondary text-text-inverse text-body-semibold px-6 py-3 rounded-full transition shadow-sm">
               Почати розбір
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-            <button onclick="switchMainTab('practice')" class="bg-surface-subtle hover:bg-surface-muted text-text-primary text-body-semibold px-4 py-2.5 rounded-xl transition">
+            <button onclick="switchMainTab('practice')" class="bg-surface hover:bg-surface-container text-text-primary border border-border-input text-body-semibold px-6 py-3 rounded-full transition">
               Одразу до вправ${stats.total ? ` · ${stats.total}` : ""}
             </button>
           </div>
         </div>
-        ${diagram ? `
-        <div class="bg-surface-subtle rounded-2xl p-5 border border-border-default">
-          <div class="text-caption-bold uppercase tracking-wider text-text-muted mb-3 text-center">${esc(d.diagramTitle || "Формула")}</div>
-          <div class="flex flex-col gap-2">${diagram}</div>
-          ${d.diagramNote ? `<p class="text-caption-xs text-text-muted text-center mt-3">${d.diagramNote}</p>` : ""}
-        </div>` : ""}
+        ${heroPills(d)}
       </div>
     </section>`;
 }
@@ -298,7 +327,10 @@ function renderTheoryPage(topic, blocks, stats) {
   let hero = blocks.find(b => b.kind === "hero");
   // У темах з підтемами вступ збираємо з назви й опису підтеми
   if (!hero && topic.__sub) {
-    hero = { kind: "hero", data: { title: topic.__sub.title, lead: topic.__sub.description || "", chips: [topic.title] } };
+    // Формулу для картинки справа беремо з першого блоку-формули підтеми
+    const f = blocks.find(x => x.kind === "formula" && x.data && (x.data.tiles || []).length);
+    hero = { kind: "hero", data: { title: topic.__sub.title, lead: topic.__sub.description || "", chips: [topic.title],
+      ...(f ? { diagram: f.data.tiles.map(t => ({ role: t.role, label: t.label, tone: t.tone })), diagramTitle: "Формула" } : {}) } };
   }
   const rich = blocks.filter(b => b.kind !== "hero" && b.kind !== "prose");
   // Блоки вище базового рівня йдуть у «Глибше» як випадні списки.
@@ -438,7 +470,7 @@ function renderDrillShell(step, total) {
           <div class="text-right">
             <div class="text-caption-bold text-text-inverse/60 mb-1" id="drill-score">0 / 0</div>
             <div class="w-24 h-1.5 rounded-full bg-text-inverse/15 overflow-hidden">
-              <div id="drill-bar" class="h-full bg-emerald-400 rounded-full transition-all duration-300" style="width:0%"></div>
+              <div id="drill-bar" class="h-full bg-sage rounded-full transition-all duration-300" style="width:0%"></div>
             </div>
           </div>
         </div>
@@ -450,7 +482,7 @@ function renderDrillShell(step, total) {
       <div class="flex items-center justify-between gap-3 mt-4">
         <button onclick="drillGo(DRILL.idx - 1)" class="text-caption-bold text-text-inverse/60 hover:text-text-inverse px-3 py-2 rounded-lg transition">← Попередня</button>
         <button onclick="switchMainTab('practice')" class="text-caption-bold text-text-inverse/60 hover:text-text-inverse px-3 py-2 rounded-lg transition">Усі вправи теми →</button>
-        <button onclick="drillGo(DRILL.idx + 1)" class="flex items-center gap-1.5 bg-text-inverse hover:bg-emerald-400 text-text-primary text-caption-bold px-4 py-2 rounded-xl transition">
+        <button onclick="drillGo(DRILL.idx + 1)" class="flex items-center gap-1.5 bg-text-inverse hover:bg-sage-surface text-text-primary text-caption-bold px-4 py-2 rounded-xl transition">
           Наступна
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
@@ -500,7 +532,7 @@ function drillRefresh() {
     const ok = solvedState[x.item.id];
     const cur = i === DRILL.idx;
     return `<button onclick="drillGo(${i})" title="Вправа ${i + 1}"
-      class="w-7 h-7 rounded-lg text-caption-bold transition ${ok ? "bg-emerald-400 text-text-primary"
+      class="w-7 h-7 rounded-lg text-caption-bold transition ${ok ? "bg-sage text-text-primary"
         : cur ? "bg-text-inverse text-text-primary" : "bg-text-inverse/15 text-text-inverse/70 hover:bg-text-inverse/25"}">${i + 1}</button>`;
   }).join("");
   if (score) score.textContent = `${done} / ${DRILL.items.length}`;

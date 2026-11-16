@@ -1,8 +1,13 @@
 // ==================== СИСТЕМА ОФОРМЛЕННЯ ====================
-// Токени з макета, зробленого в Google Stitch: кольори, шрифти, розміри.
+// Токени дизайн-системи «Ocean Mist» (Google Stitch): кольори, шрифти, розміри.
 // Підключається ОДРАЗУ ПІСЛЯ скрипта Tailwind і до решти наших скриптів.
 // Стандартна палітра Tailwind (slate, indigo…) лишається доступною,
 // бо ми тільки розширюємо тему — старі класи в теорії з бази не ламаються.
+
+// Усі кольори — це CSS-змінні (--c-назва = "r g b"), значення яких задає обрана палітра
+// з js/palettes.js. Тому перемикання палітри не потребує жодної правки верстки,
+// а класи з прозорістю (bg-secondary/40 тощо) далі працюють.
+const cv = n => `rgb(var(--c-${n}) / <alpha-value>)`;
 
 tailwind.config = {
   darkMode: "class",
@@ -10,67 +15,91 @@ tailwind.config = {
     extend: {
       colors: {
         // поверхні
-        background: "#f7f9fb",
-        surface: "#ffffff",
-        "surface-subtle": "#f1f5f9",
-        "surface-muted": "#e2e8f0",
-        "surface-container": "#eceef0",
+        background: cv("background"),
+        surface: cv("surface"),
+        "surface-subtle": cv("surface-subtle"),
+        "surface-muted": cv("surface-muted"),
+        "surface-container": cv("surface-container"),
+        "surface-high": cv("surface-high"),
 
         // текст
-        "text-primary": "#0f172a",
-        "text-body": "#1e293b",
-        "text-secondary": "#475569",
-        "text-muted": "#64748b",
-        "text-tertiary": "#94a3b8",
+        "text-primary": cv("text-primary"),
+        "text-body": cv("text-primary"),
+        "text-secondary": cv("text-secondary"),
+        "text-muted": cv("text-muted"),
+        "text-tertiary": cv("text-tertiary"),
         "text-inverse": "#ffffff",
 
-        // акцент
-        secondary: "#4b41e1",
-        "interactive-hover": "#4338ca",
-        "interactive-subtle": "#eef2ff",
-        "interactive-border": "#e0e7ff",
+        // головний акцент палітри (заливка кнопок: білий текст на ній ≥ 4,5:1)
+        secondary: cv("primary"),
+        "interactive-hover": cv("interactive-hover"),
+        "interactive-subtle": cv("interactive-subtle"),
+        "interactive-border": cv("interactive-border"),
+        "interactive-text": cv("interactive-text"),
+
+        // додаткові акценти (категорії слів у формулах); у кожній палітрі гармонізовані із зерном
+        seafoam: cv("seafoam"), "seafoam-surface": cv("seafoam-surface"), "seafoam-text":  cv("seafoam-text"), "seafoam-border":  cv("seafoam-border"),
+        sage: cv("sage"), "sage-surface": cv("sage-surface"), "sage-text":  cv("sage-text"), "sage-border":  cv("sage-border"),
+        lilac: cv("lilac"), "lilac-surface": cv("lilac-surface"), "lilac-text":  cv("lilac-text"), "lilac-border":  cv("lilac-border"),
+        sand: cv("sand"), "sand-surface": cv("sand-surface"), "sand-text":  cv("sand-text"), "sand-border":  cv("sand-border"),
 
         // стани
-        "success-surface": "#ecfdf5",
-        "success-border": "#a7f3d0",
-        "success-emphasis": "#047857",
-        error: "#e11d48",
-        "error-surface": "#fff1f2",
-        "error-border": "#fecdd3",
-        "error-emphasis": "#be123c",
-        warning: "#d97706",
-        "warning-surface": "#fffbeb",
-        "warning-border": "#fef3c7",
+        "success-surface": cv("success-surface"),
+        "success-border": cv("success-border"),
+        "success-emphasis": cv("success-emphasis"),
+        error: cv("error"),
+        "error-surface": cv("error-surface"),
+        "error-border": cv("error-border"),
+        "error-emphasis": cv("error-emphasis"),
+        warning: cv("warning"),
+        "warning-surface": cv("warning-surface"),
+        "warning-border": cv("warning-border"),
 
         // викреслене слово у вправах «зайве слово»
-        "strike-surface": "#fee2e2",
-        "strike-border": "#fca5a5",
-        "strike-text": "#ef4444",
+        "strike-surface": cv("strike-surface"),
+        "strike-border": cv("strike-border"),
+        "strike-text": cv("strike-text"),
 
         // персональні вправи учня
-        "accent-personal": "#7c3aed",
-        "accent-personal-surface": "#f5f3ff",
+        "accent-personal": cv("lilac"),
+        "accent-personal-surface": cv("lilac-surface"),
 
-        "border-default": "#e2e8f0",
-        "border-input": "#cbd5e1",
+        "border-default": cv("border-default"),
+        "border-input": cv("border-input"),
+
+        // Старі блоки теорії в базі написані класами indigo-*. Ця шкала завжди
+        // дорівнює головному кольору обраної палітри, тож вони вписуються без правок у базі.
+        indigo: {
+          50: cv("i50"), 100: cv("i100"), 200:  cv("i200"), 300:  cv("i300"), 400:  cv("i400"),
+          500: cv("i500"), 600: cv("i600"), 700:  cv("i700"), 800:  cv("i800"), 900:  cv("i900"),
+        },
       },
-      borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      borderRadius: { DEFAULT: "0.5rem", lg: "0.75rem", xl: "1rem", "2xl": "1.5rem", "3xl": "2rem", full: "9999px" },
+      boxShadow: {
+        // м'які розсіяні тіні з відтінком палітри, без різких країв
+        sm: "0 1px 2px rgb(var(--c-shadow) / .04), 0 2px 8px -2px rgb(var(--c-shadow) / .05)",
+        md: "0 8px 24px -4px rgb(var(--c-shadow) / .07), 0 4px 12px -2px rgb(var(--c-shadow) / .04)",
+        float: "0 12px 32px -6px rgb(var(--c-glow) / .18)",
+      },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        // Plus Jakarta Sans не має основної кирилиці, тому українські літери
+        // автоматично беруться з Manrope: обидва шрифти геометричні й добре поєднуються.
+        sans: ["Manrope", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Manrope", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       fontSize: {
-        micro: ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
-        "caption-xs": ["12px", { lineHeight: "16px", letterSpacing: "0", fontWeight: "500" }],
-        "caption-bold": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "700" }],
-        "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0", fontWeight: "400" }],
+        micro: ["11px", { lineHeight: "16px", letterSpacing: "0.03em", fontWeight: "600" }],
+        "caption-xs": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "caption-bold": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+        "body-sm": ["13px", { lineHeight: "19px", letterSpacing: "0", fontWeight: "400" }],
         "body-base": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "400" }],
         "body-medium": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "500" }],
-        "body-semibold": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "600" }],
+        "body-semibold": ["14px", { lineHeight: "22px", letterSpacing: "0.005em", fontWeight: "600" }],
         "heading-md": ["16px", { lineHeight: "24px", letterSpacing: "0", fontWeight: "600" }],
         "heading-lg": ["18px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "700" }],
         "heading-xl": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "700" }],
-        "display-title": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-title": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "700" }],
         "code-mono": ["12px", { lineHeight: "16px", letterSpacing: "0", fontWeight: "500" }],
       },
     },
@@ -99,3 +128,55 @@ function icon(name, cls = "w-4 h-4") {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
 }
+
+
+// ==================== ПАЛІТРИ (перемикач кольорів) ====================
+// Палітри лежать у js/palettes.js (генеруються з одного «зерна» кольору за принципами
+// Material You). Тут вони перетворюються на CSS-змінні й застосовуються до сторінки.
+const PALETTE_KEY = "gl-palette";
+const hexToRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(" ");
+
+(function injectPalettes() {
+  if (typeof PALETTES === "undefined") return;
+  const block = id => Object.entries(PALETTES[id].vars).map(([k, h]) => `--c-${k}:${hexToRgb(h)};`).join("");
+  const css = `:root{${block("ocean")}}` + Object.keys(PALETTES).map(id => `[data-palette="${id}"]{${block(id)}}`).join("");
+  const st = document.createElement("style");
+  st.id = "palette-vars";
+  st.textContent = css;
+  document.head.appendChild(st);
+  let saved = "ocean";
+  try { saved = localStorage.getItem(PALETTE_KEY) || "ocean"; } catch (e) {}
+  document.documentElement.dataset.palette = PALETTES[saved] ? saved : "ocean";
+})();
+
+function currentPalette() { return document.documentElement.dataset.palette || "ocean"; }
+
+function setPalette(id) {
+  if (typeof PALETTES === "undefined" || !PALETTES[id]) return;
+  document.documentElement.dataset.palette = id;
+  try { localStorage.setItem(PALETTE_KEY, id); } catch (e) {}
+  document.querySelectorAll("[data-palette-switcher]").forEach(renderPaletteSwitcher);
+}
+
+// Ряд круглих «зерен»: клік перемикає палітру. Малюється в будь-який контейнер.
+function renderPaletteSwitcher(el) {
+  if (!el || typeof PALETTES === "undefined") return;
+  el.setAttribute("data-palette-switcher", "");
+  const cur = currentPalette();
+  el.innerHTML = Object.entries(PALETTES).map(([id, p]) => {
+    const on = id === cur;
+    const sw = p.vars.i500;
+    return `<button type="button" onclick="setPalette('${id}')" title="${p.label}" aria-label="Палітра: ${p.label}" aria-pressed="${on}"
+      class="group flex flex-col items-center gap-1 focus:outline-none">
+      <span class="w-9 h-9 rounded-full grid place-items-center border-2 transition ${on ? "border-text-primary" : "border-transparent group-hover:border-border-input"}">
+        <span class="w-7 h-7 rounded-full" style="background:conic-gradient(${sw} 0 50%, ${p.vars.seafoam} 50% 75%, ${p.vars.lilac} 75% 100%)"></span>
+      </span>
+      <span class="text-micro ${on ? "text-text-primary" : "text-text-muted"}">${p.label}</span>
+    </button>`;
+  }).join("");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const box = document.getElementById("palette-switcher");
+  if (box) renderPaletteSwitcher(box);
+});
