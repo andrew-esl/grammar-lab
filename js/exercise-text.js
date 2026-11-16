@@ -15,6 +15,8 @@ function exerciseText(type, p) {
         correct: p.correct || "",
       };
     case "gap":
+      if (Array.isArray(p.blanks) && p.blanks.length)
+        return { question: p.prompt || "", correct: p.blanks.map(b => b[0]).join(" · ") };
       return { question: p.prompt || "", correct: (p.answers || []).join(" / ") };
     case "cross":
       return {
@@ -23,6 +25,11 @@ function exerciseText(type, p) {
       };
     case "abcd":
       return { question: p.q || "", correct: (p.options || [])[p.correct] || "" };
+    case "translate":
+      return {
+        question: String(p.ua || p.src || "").replace(/\[\[|\]\]/g, "").trim(),
+        correct: (p.answers || [])[0] || "",
+      };
     default:
       return { question: JSON.stringify(p).slice(0, 120), correct: "" };
   }
@@ -34,6 +41,7 @@ const TYPE_LABELS = {
   gap: "Пропуск",
   cross: "Зайве слово",
   abcd: "Тест",
+  translate: "Переклад / письмо",
 };
 
 const LEVEL_LABELS = {

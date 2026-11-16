@@ -22,6 +22,7 @@ const GROUPS = [
   { type: "gap",    title: "Розкрити дужки",    hint: "Впиши потрібну форму" },
   { type: "cross",  title: "Зайве слово",       hint: "Знайди слово, яке треба прибрати" },
   { type: "abcd",   title: "Граматичний тест",  hint: "Один правильний варіант із чотирьох" },
+  { type: "translate", title: "Переклад і письмо", hint: "Впишіть речення англійською: помилки буде показано за словами" },
 ];
 
 const LEVEL_RANK = { elementary: 0, intermediate: 1, advanced: 2 };
@@ -466,6 +467,7 @@ function fillRow(row, t, type) {
   if (type === "choice") return fillChoiceRow(row, t);
   if (type === "cross") return fillCrossRow(row, t);
   if (type === "abcd") return fillAbcdRow(row, t);
+  if (type === "translate") return fillTranslateRow(row, t);
 }
 
 // Спільна «рамка» однієї вправи
@@ -585,6 +587,7 @@ function checkOrderItem(itemId) {
 }
 
 function fillGapRow(row, t) {
+  if (Array.isArray(t.blanks) && t.blanks.length) return fillMultiGapRow(row, t);
   const isDone = solvedState[t.id];
   const shell = rowShell(t, `<label class="block text-body-medium text-text-primary leading-relaxed">${t.prompt}</label>`);
   row.className = shell.cls;
@@ -618,11 +621,71 @@ function escapeAttr(s) {
   return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
+// Один пропуск: чи збігається введене з будь-яким допустимим варіантом
+// (скорочення, апострофи й регістр не мають значення: don't = do not).
+function gapMatches(raw, variants) {
+  if (!String(raw).trim()) return false;
+  if (window.TR) return variants.some(a => TR.same(raw, a));
+  return variants.map(normalizeAnswer).includes(normalizeAnswer(raw));
+}
+
+// Кілька пропусків в одному реченні: поля вставляються просто в текст.
+function gapDraftSet(id, i, v) { (gapDraft[id] ||= [])[i] = v; }
+const GAP_INPUT = "mx-1 my-0.5 px-2 py-1 text-body-base text-center bg-surface border border-border-input rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary transition";
+function fillMultiGapRow(row, t) {
+  const isDone = solvedState[t.id];
+  const draft = Array.isArray(gapDraft[t.id]) ? gapDraft[t.id] : [];
+  const parts = String(t.prompt).split(/_{3,}/);
+  let html = "";
+  parts.forEach((p, i) => {
+    html += p;
+    if (i < parts.length - 1) {
+      const first = (t.blanks[i] && t.blanks[i][0]) || "";
+      const size = Math.max(6, Math.min(18, first.length + 3));
+      html += `<input type="text" id="inp-${t.id}-${i}" size="${size}" value="${escapeAttr(isDone ? first : (draft[i] || ""))}" ${isDone ? "disabled" : ""}
+        autocomplete="off" autocapitalize="off" spellcheck="false"
+        oninput="gapDraftSet('${t.id}', ${i}, this.value)"
+        onkeydown="if(event.key==='Enter') checkGapItem('${t.id}')"
+        class="${GAP_INPUT}${isDone ? " text-success-emphasis font-semibold" : ""}">`;
+    }
+  });
+  const shell = rowShell(t, `<div class="text-body-medium text-text-primary leading-loose">${html}</div>`);
+  row.className = shell.cls;
+  row.innerHTML = `
+    ${shell.html}
+    ${isDone ? "" : `<button onclick="checkGapItem('${t.id}')" class="${BTN_CHECK} mt-1.5 flex items-center gap-2">Перевірити <kbd class="hidden sm:inline px-1.5 py-0.5 rounded bg-surface/20 text-micro font-mono">↵</kbd></button>`}
+    ${feedbackHtml(t.id, isDone ? "done" : null, isDone ? t.explanation : "")}`;
+}
+
+function checkMultiGapItem(item) {
+  const vals = item.blanks.map((_, i) => (document.getElementById(`inp-${item.id}-${i}`) || { value: "" }).value);
+  const res = item.blanks.map((v, i) => gapMatches(vals[i], v));
+  const ok = res.every(Boolean);
+  res.forEach((r, i) => {
+    const el = document.getElementById(`inp-${item.id}-${i}`);
+    if (el && !ok) {
+      el.classList.toggle("border-error", !r); el.classList.toggle("bg-error-surface", !r);
+      el.classList.toggle("border-success-emphasis", r);
+    }
+  });
+  apiRecordAttempt(item.__uuid, vals.join(" | "), ok);
+  if (ok) {
+    delete gapDraft[item.id];
+    markSolved(item.id);
+    rerenderItem(item.id);
+    setFeedback(item.id, "ok", "Правильно! " + item.explanation);
+  } else {
+    const right = item.blanks.map(v => `«${v[0]}»`).join(", ");
+    setFeedback(item.id, "err", `Правильні відповіді: ${right}. ${item.explanation}`);
+  }
+}
+
 function checkGapItem(itemId) {
   const { item } = findItemById(itemId);
   if (!item) return;
+  if (Array.isArray(item.blanks) && item.blanks.length) return checkMultiGapItem(item);
   const raw = document.getElementById("inp-" + itemId).value;
-  const ok = item.answers.map(normalizeAnswer).includes(normalizeAnswer(raw));
+  const ok = gapMatches(raw, item.answers);
   apiRecordAttempt(item.__uuid, raw, ok);
   if (ok) {
     delete gapDraft[itemId];
@@ -738,6 +801,151 @@ function checkAbcdItem(itemId, oIdx) {
   }
 }
 
+// ==================== ПЕРЕКЛАД І ПИСЬМО ====================
+// Учень вписує ціле речення. Перевірка — js/translate.js: слова порівнюються з еталонами,
+// помилки показуються за словами, а далі пояснюється, чому саме так.
+// kind: translate (переклад з української) | build (скласти з підказок) | fix (виправити помилку)
+//       | question (питання до виділеного) | rewrite (переписати за зразком)
+let trDraft = {};     // id → введений, але ще не перевірений текст
+let trHint = {};      // id → чи показано підказку
+
+const TR_KIND = {
+  translate: { label: "Переклад на англійську", ph: "Впишіть переклад англійською…" },
+  build:     { label: "Складіть речення з підказок", ph: "Впишіть речення…" },
+  fix:       { label: "Знайдіть помилку й виправте речення", ph: "Виправте речення…" },
+  question:  { label: "Поставте питання до виділеного", ph: "Впишіть питання…" },
+  rewrite:   { label: "Перепишіть речення", ph: "Впишіть речення…" },
+};
+
+function trSourceHtml(t) {
+  const kind = t.kind || "translate";
+  if (kind === "translate") return `<p class="text-body-semibold text-text-primary leading-relaxed">${esc(t.ua || "")}</p>`;
+  if (kind === "build") {
+    const cues = String(t.src || "").split("/").map(x => x.trim()).filter(Boolean);
+    return `<div class="flex flex-wrap items-center gap-1.5">${cues.map((c, i) => `${i ? '<span class="text-text-tertiary">/</span>' : ""}<span class="px-2.5 py-1 rounded-lg bg-surface border border-border-default text-body-medium text-text-primary">${esc(c)}</span>`).join("")}</div>`;
+  }
+  if (kind === "question") {
+    // [[слова]] — підкреслена частина речення
+    const html = esc(t.src || "").replace(/\[\[(.+?)\]\]/g, '<u class="decoration-2 decoration-secondary underline-offset-4 font-semibold text-secondary">$1</u>');
+    return `<p class="text-body-semibold text-text-primary leading-relaxed">${html}</p>`;
+  }
+  return `<p class="text-body-semibold text-text-primary leading-relaxed">${esc(t.src || "")}</p>`;
+}
+
+function trHintText(t) {
+  if (t.hint) return t.hint;
+  const codes = (t.tense || []).map(c => TR.TENSES[c]).filter(Boolean);
+  if (codes.length) return codes.map(x => `${x.name}: ${x.formula}`).join(" · ");
+  return t.kind === "question" ? "Питальне слово + допоміжне дієслово + підмет + основне дієслово." : "Спробуйте визначити час за словами-маркерами у реченні.";
+}
+
+function fillTranslateRow(row, t) {
+  const isDone = solvedState[t.id];
+  const kind = t.kind || "translate";
+  const K = TR_KIND[kind] || TR_KIND.translate;
+  const shell = rowShell(t, `
+    <div class="text-micro font-bold uppercase tracking-wider text-text-tertiary mb-1.5">${K.label}</div>
+    ${trSourceHtml(t)}`);
+  row.className = shell.cls;
+  const start = isDone ? (t.answers[0] || "") : (trDraft[t.id] ?? (kind === "fix" ? (t.src || "") : ""));
+  row.innerHTML = `
+    ${shell.html}
+    <textarea id="inp-${t.id}" rows="2" ${isDone ? "disabled" : ""} placeholder="${K.ph}"
+      autocomplete="off" autocapitalize="sentences" spellcheck="false"
+      oninput="trDraft['${t.id}'] = this.value"
+      onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); checkTranslateItem('${t.id}'); }"
+      class="w-full px-3 py-2 text-body-base leading-relaxed bg-surface border border-border-input rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-secondary transition ${isDone ? "text-success-emphasis font-semibold" : ""}">${esc(start)}</textarea>
+    ${isDone ? "" : `
+    <div class="flex flex-wrap items-center gap-2 mt-2">
+      <button onclick="checkTranslateItem('${t.id}')" class="${BTN_CHECK} flex items-center gap-2">Перевірити <kbd class="hidden sm:inline px-1.5 py-0.5 rounded bg-surface/20 text-micro font-mono">↵</kbd></button>
+      <button onclick="toggleTranslateHint('${t.id}')" class="text-caption-bold text-text-muted hover:text-secondary px-2 py-2 rounded-lg transition">Підказка</button>
+    </div>
+    <div id="hint-${t.id}" class="${trHint[t.id] ? "" : "hidden "}text-caption-xs text-text-secondary bg-interactive-subtle rounded-lg px-3 py-2 mt-2">${esc(trHintText(t))}</div>`}
+    <div id="fb-${t.id}" class="${isDone ? "" : "hidden"}">${isDone ? trDoneHtml(t) : ""}</div>`;
+}
+
+function toggleTranslateHint(id) {
+  trHint[id] = !trHint[id];
+  const el = document.getElementById("hint-" + id);
+  if (el) el.classList.toggle("hidden", !trHint[id]);
+}
+
+function trDoneHtml(t) {
+  const others = (t.answers || []).slice(1, 4);
+  return `<div class="rounded-lg border border-success-border bg-surface px-3 py-2.5 mt-2.5 text-caption-xs leading-relaxed text-text-secondary">
+    <div class="flex items-start gap-2">
+      ${speakBtn((t.answers || [])[0] || "")}
+      <div class="flex-1"><span class="font-semibold text-success-emphasis">Еталон:</span> ${esc((t.answers || [])[0] || "")}</div>
+    </div>
+    ${others.length ? `<div class="mt-1 text-text-muted">Також можна: ${others.map(esc).join(" · ")}</div>` : ""}
+    ${t.explanation ? `<div class="mt-1.5">${esc(t.explanation)}</div>` : ""}
+  </div>`;
+}
+
+function trWordsHtml(list, cls) {
+  return list.map(x => {
+    const missing = (x.before || []).map(w => `<span class="px-1.5 py-0.5 rounded bg-success-surface border border-dashed border-success-emphasis text-success-emphasis">+ ${esc(w)}</span>`).join(" ");
+    const w = x.bad
+      ? `<span class="px-1 rounded bg-error-surface text-error-emphasis line-through decoration-2">${esc(x.w)}</span>`
+      : (x.diff ? `<span class="px-1 rounded bg-success-surface text-success-emphasis font-semibold">${esc(x.w)}</span>` : `<span>${esc(x.w)}</span>`);
+    return missing + " " + w;
+  }).join(" ");
+}
+
+function trResultHtml(t, res) {
+  if (res.empty || res.unchanged) {
+    return `<div class="rounded-lg border border-warning-border bg-warning-surface px-3 py-2 mt-2.5 text-caption-xs text-text-secondary">${esc(res.notes[0].t)}</div>`;
+  }
+  const soft = res.soft;
+  const tone = soft ? "border-warning-border bg-warning-surface" : "border-error-border bg-error-surface";
+  const m = res.marks;
+  const tail = (m.tail || []).map(w => `<span class="px-1.5 py-0.5 rounded bg-success-surface border border-dashed border-success-emphasis text-success-emphasis">+ ${esc(w)}</span>`).join(" ");
+  const notes = (res.notes || []).map(n => `<li class="flex gap-2"><span class="text-secondary shrink-0">•</span><span>${esc(n.t)}</span></li>`).join("");
+  return `<div class="rounded-lg border ${tone} px-3 py-2.5 mt-2.5 text-caption-xs leading-relaxed text-text-secondary space-y-2">
+    <div>
+      <div class="text-micro font-bold uppercase tracking-wider ${soft ? "text-warning" : "text-error"} mb-1">${soft ? "Граматика збігається з еталоном, відрізняються слова" : "Ваш варіант"}</div>
+      <div class="text-body-medium leading-loose">${trWordsHtml(m.user)} ${tail}</div>
+    </div>
+    <div>
+      <div class="text-micro font-bold uppercase tracking-wider text-success-emphasis mb-1">Еталон</div>
+      <div class="text-body-medium leading-loose">${trWordsHtml(m.ref.map(x => ({ w: x.w, diff: x.diff })))}</div>
+    </div>
+    ${notes ? `<ul class="space-y-1 pt-1 border-t border-border-default">${notes}</ul>` : ""}
+    ${soft ? `<div class="pt-1 border-t border-border-default">
+      Якщо ваше слово — синонім, який підходить за змістом, зарахуйте відповідь самі. Вашу версію побачить викладач.
+      <button onclick="acceptTranslate('${t.id}')" class="mt-1.5 block bg-text-primary hover:bg-secondary text-text-inverse text-caption-bold px-3 py-1.5 rounded-lg transition">Зарахувати мій варіант</button>
+    </div>` : `<div class="text-text-muted pt-1 border-t border-border-default">${esc(t.explanation || "")}</div>`}
+  </div>`;
+}
+
+function checkTranslateItem(itemId) {
+  const { item } = findItemById(itemId);
+  if (!item) return;
+  const raw = document.getElementById("inp-" + itemId).value;
+  const res = TR.check(raw, item);
+  const fb = document.getElementById("fb-" + itemId);
+  if (res.ok) {
+    apiRecordAttempt(item.__uuid, raw, true);
+    delete trDraft[itemId];
+    markSolved(itemId);
+    rerenderItem(itemId);
+    return;
+  }
+  if (!res.empty && !res.unchanged && !res.soft) apiRecordAttempt(item.__uuid, raw, false);
+  if (fb) { fb.className = ""; fb.innerHTML = trResultHtml(item, res); }
+}
+
+// «М'який» збіг: граматика еталонна, але слова інші. Учень сам вирішує, чи це синонім.
+function acceptTranslate(itemId) {
+  const { item } = findItemById(itemId);
+  if (!item) return;
+  const raw = document.getElementById("inp-" + itemId).value;
+  apiRecordAttempt(item.__uuid, "≈ " + raw, true);
+  delete trDraft[itemId];
+  markSolved(itemId);
+  rerenderItem(itemId);
+}
+
 // ==================== УТИЛІТИ ====================
 function findItemById(itemId) {
   const exGroups = TOPICS_DATA[currentTopic].exercises;
@@ -812,6 +1020,8 @@ async function resetProgress() {
     delete solvedState[item.id];
     delete orderState[item.id];
     delete gapDraft[item.id];
+    delete trDraft[item.id];
+    delete trHint[item.id];
   }));
 
   try {
