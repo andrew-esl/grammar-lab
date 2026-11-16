@@ -1,5 +1,5 @@
 // ==================== СИСТЕМА ОФОРМЛЕННЯ ====================
-// Токени з макета, зробленого в Google Stitch: кольори, шрифти, розміри.
+// Токени дизайн-системи «Ocean Mist» (Google Stitch): кольори, шрифти, розміри.
 // Підключається ОДРАЗУ ПІСЛЯ скрипта Tailwind і до решти наших скриптів.
 // Стандартна палітра Tailwind (slate, indigo…) лишається доступною,
 // бо ми тільки розширюємо тему — старі класи в теорії з бази не ламаються.
@@ -9,68 +9,101 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        // поверхні
-        background: "#f7f9fb",
+        // поверхні (Ocean Mist: холодний туман, морський камінь)
+        background: "#f1f5f7",
         surface: "#ffffff",
-        "surface-subtle": "#f1f5f9",
-        "surface-muted": "#e2e8f0",
-        "surface-container": "#eceef0",
+        "surface-subtle": "#f4f8fa",
+        "surface-muted": "#e2e9ef",
+        "surface-container": "#edf2f6",
+        "surface-high": "#d4dfe7",
 
         // текст
-        "text-primary": "#0f172a",
+        "text-primary": "#1e293b",
         "text-body": "#1e293b",
-        "text-secondary": "#475569",
-        "text-muted": "#64748b",
-        "text-tertiary": "#94a3b8",
+        "text-secondary": "#334155",
+        "text-muted": "#526072",
+        "text-tertiary": "#8a98a8",
         "text-inverse": "#ffffff",
 
-        // акцент
-        secondary: "#4b41e1",
-        "interactive-hover": "#4338ca",
-        "interactive-subtle": "#eef2ff",
-        "interactive-border": "#e0e7ff",
+        // акцент: океанічний блакитний. Заливка кнопок темніша за #3b82a6 із макета,
+        // щоб білий текст на ній читався (контраст ≥ 4,5:1).
+        secondary: "#347c9f",
+        "interactive-hover": "#0c6385",
+        "interactive-subtle": "#e0f2fe",
+        "interactive-border": "#bfdcec",
+        "interactive-text": "#0c6385",
+
+        // додаткові акценти: бірюза, шавлія, баклажан, коралово-рожевий
+        seafoam: "#5ea8a7",
+        "seafoam-surface": "#d5efee",
+        "seafoam-text": "#136968",
+        sage: "#94a89a",
+        "sage-surface": "#dbe4dc",
+        "sage-text": "#3f6350",
+        lilac: "#7c6a85",
+        "lilac-surface": "#eae4ee",
+        "lilac-text": "#51415a",
+        sand: "#c99a2e",
+        "sand-surface": "#fbf0cf",
+        "sand-text": "#7a5a12",
 
         // стани
-        "success-surface": "#ecfdf5",
-        "success-border": "#a7f3d0",
-        "success-emphasis": "#047857",
-        error: "#e11d48",
-        "error-surface": "#fff1f2",
-        "error-border": "#fecdd3",
-        "error-emphasis": "#be123c",
-        warning: "#d97706",
-        "warning-surface": "#fffbeb",
-        "warning-border": "#fef3c7",
+        "success-surface": "#e6eee8",
+        "success-border": "#c3d3c8",
+        "success-emphasis": "#3f6350",
+        error: "#b85450",
+        "error-surface": "#f9e6e6",
+        "error-border": "#ecc4c4",
+        "error-emphasis": "#93403d",
+        warning: "#b7791f",
+        "warning-surface": "#fdf6e3",
+        "warning-border": "#f1e0b0",
 
         // викреслене слово у вправах «зайве слово»
-        "strike-surface": "#fee2e2",
-        "strike-border": "#fca5a5",
-        "strike-text": "#ef4444",
+        "strike-surface": "#f9dede",
+        "strike-border": "#e6a9a9",
+        "strike-text": "#b85450",
 
         // персональні вправи учня
-        "accent-personal": "#7c3aed",
-        "accent-personal-surface": "#f5f3ff",
+        "accent-personal": "#7c6a85",
+        "accent-personal-surface": "#eae4ee",
 
-        "border-default": "#e2e8f0",
-        "border-input": "#cbd5e1",
+        "border-default": "#dde5ec",
+        "border-input": "#c0cad3",
+
+        // Старі блоки теорії в базі написані класами indigo-*. Перефарбовуємо цю шкалу
+        // на океанічний блакитний, щоб вони вписались у нову палітру без правок у базі.
+        indigo: {
+          50: "#eef6fb", 100: "#e0f2fe", 200: "#bfdcec", 300: "#8ccff6", 400: "#5c9bb7",
+          500: "#3b82a6", 600: "#347c9f", 700: "#0c6385", 800: "#1e405b", 900: "#163b4f",
+        },
       },
-      borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      borderRadius: { DEFAULT: "0.5rem", lg: "0.75rem", xl: "1rem", "2xl": "1.5rem", "3xl": "2rem", full: "9999px" },
+      boxShadow: {
+        // м'які розсіяні тіні з холодним відтінком, без різких країв
+        sm: "0 1px 2px rgba(30,41,59,.04), 0 2px 8px -2px rgba(30,41,59,.05)",
+        md: "0 8px 24px -4px rgba(30,41,59,.07), 0 4px 12px -2px rgba(30,41,59,.04)",
+        float: "0 12px 32px -6px rgba(59,130,166,.18)",
+      },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        // Plus Jakarta Sans не має основної кирилиці, тому українські літери
+        // автоматично беруться з Manrope: обидва шрифти геометричні й добре поєднуються.
+        sans: ["Manrope", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Manrope", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       fontSize: {
-        micro: ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
-        "caption-xs": ["12px", { lineHeight: "16px", letterSpacing: "0", fontWeight: "500" }],
-        "caption-bold": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "700" }],
-        "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0", fontWeight: "400" }],
+        micro: ["11px", { lineHeight: "16px", letterSpacing: "0.03em", fontWeight: "600" }],
+        "caption-xs": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        "caption-bold": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+        "body-sm": ["13px", { lineHeight: "19px", letterSpacing: "0", fontWeight: "400" }],
         "body-base": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "400" }],
         "body-medium": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "500" }],
-        "body-semibold": ["14px", { lineHeight: "22px", letterSpacing: "0", fontWeight: "600" }],
+        "body-semibold": ["14px", { lineHeight: "22px", letterSpacing: "0.005em", fontWeight: "600" }],
         "heading-md": ["16px", { lineHeight: "24px", letterSpacing: "0", fontWeight: "600" }],
         "heading-lg": ["18px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "700" }],
         "heading-xl": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "700" }],
-        "display-title": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "700" }],
+        "display-title": ["26px", { lineHeight: "34px", letterSpacing: "-0.015em", fontWeight: "700" }],
         "code-mono": ["12px", { lineHeight: "16px", letterSpacing: "0", fontWeight: "500" }],
       },
     },

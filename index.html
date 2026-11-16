@@ -4,18 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grammar Lab — англійська граматика</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/theme.js?v=11"></script>
+  <script src="js/theme.js?v=12"></script>
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    body { font-family: 'Manrope', system-ui, sans-serif; }
+    h1, h2, h3, .font-display { font-family: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif; }
     .word-chip { transition: all .15s ease; user-select: none; }
     .word-chip:active { transform: scale(.95); }
-    .strike-word { text-decoration: line-through; color: #ef4444; background-color: #fee2e2; border-color: #fca5a5; }
-    .shadow-inner-soft { box-shadow: inset 0 1px 3px rgba(15,23,42,.06); }
+    .strike-word { text-decoration: line-through; color: #b85450; background-color: #f9dede; border-color: #e6a9a9; }
+    .shadow-inner-soft { box-shadow: inset 0 1px 3px rgba(30,41,59,.06); }
     summary::-webkit-details-marker { display: none; }
     .theory-body table { width: 100%; border-collapse: collapse; }
-    .theory-body td, .theory-body th { border: 1px solid #e2e8f0; padding: 4px 6px; }
+    .theory-body td, .theory-body th { border: 1px solid #dde5ec; padding: 4px 6px; }
     .theory-body ul { margin-top: .25rem; }
   </style>
 </head>
@@ -47,7 +48,7 @@
         </div>
         <p id="login-error" class="hidden text-caption-xs text-error font-medium bg-error-surface border border-error-border rounded-lg px-3 py-2"></p>
         <button id="login-submit" type="submit"
-          class="w-full bg-text-primary hover:bg-secondary disabled:opacity-60 text-text-inverse text-body-semibold py-2.5 rounded-xl transition shadow-sm">
+          class="w-full bg-text-primary hover:bg-secondary disabled:opacity-60 text-text-inverse text-body-semibold py-2.5 rounded-full transition shadow-sm">
           Увійти
         </button>
         <p class="text-caption-xs text-text-tertiary text-center">Доступ видає викладач.</p>
@@ -171,11 +172,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- ?v=N — захист від кешу браузера: ПІСЛЯ КОЖНОЇ ЗМІНИ у js/*.js
        збільшуйте номер, інакше відвідувач може отримати стару версію файлу. -->
-  <script src="js/config.js?v=11"></script>
-  <script src="js/api.js?v=11"></script>
-  <script src="js/theory.js?v=11"></script>
-  <script src="js/translate.js?v=11"></script>
-  <script src="js/engine.js?v=11"></script>
-  <script src="js/auth.js?v=11"></script>
+  <script src="js/config.js?v=12"></script>
+  <script src="js/api.js?v=12"></script>
+  <script src="js/theory.js?v=12"></script>
+  <script src="js/translate.js?v=12"></script>
+  <script src="js/engine.js?v=12"></script>
+  <script src="js/auth.js?v=12"></script>
 </body>
 </html>

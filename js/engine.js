@@ -278,7 +278,7 @@ function renderTheoryToc(blocks) {
           </a>`).join("")}
       </nav>
       <button onclick="switchMainTab('practice')"
-        class="w-full mt-4 flex items-center justify-center gap-2 bg-text-primary hover:bg-secondary text-text-inverse text-body-semibold py-2.5 rounded-xl transition shadow-sm">
+        class="w-full mt-4 flex items-center justify-center gap-2 bg-text-primary hover:bg-secondary text-text-inverse text-body-semibold py-2.5 rounded-full transition shadow-sm">
         Перейти до вправ
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </button>
@@ -533,7 +533,7 @@ function fillOrderRow(row, t) {
            </span>`
         : st.selected.map((w, i) => `
           <button onclick="removeOrderWord('${t.id}', ${i})"
-            class="word-chip flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-secondary hover:bg-interactive-hover text-text-inverse text-heading-md shadow-md">
+            class="word-chip flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-secondary hover:bg-interactive-hover text-text-inverse text-heading-md shadow-md">
             ${w}<svg class="w-4 h-4 opacity-75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
           </button>`).join("")}
     </div>
@@ -551,7 +551,7 @@ function fillOrderRow(row, t) {
       <div class="flex flex-wrap items-center gap-2.5">
         ${st.pool.map((w, i) => `
           <button onclick="pickOrderWord('${t.id}', ${i})"
-            class="word-chip px-3.5 py-2 rounded-xl bg-surface-subtle hover:bg-secondary hover:text-text-inverse text-text-primary text-heading-md border border-border-default hover:border-secondary shadow-sm transition-all">${w}</button>`).join("")}
+            class="word-chip px-3.5 py-2 rounded-full bg-surface-subtle hover:bg-secondary hover:text-text-inverse text-text-primary text-heading-md border border-border-default hover:border-secondary shadow-sm transition-all">${w}</button>`).join("")}
       </div>
     </div>` : ""}
 
@@ -740,7 +740,7 @@ function fillCrossRow(row, t) {
     <div class="flex flex-wrap items-center gap-1.5">
       ${t.words.map((w, i) => `
         <button onclick="checkCrossItem('${t.id}', ${i})"
-          class="word-chip px-3 py-2 rounded-xl text-body-medium border-2 transition-all ${isDone && i === t.extraIndex
+          class="word-chip px-3 py-2 rounded-full text-body-medium border-2 transition-all ${isDone && i === t.extraIndex
             ? "strike-word font-semibold"
             : "bg-surface border-border-default text-text-body hover:border-error hover:text-error hover:shadow-sm"}">${w}</button>`).join("")}
     </div>

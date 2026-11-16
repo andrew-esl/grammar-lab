@@ -499,7 +499,7 @@ function renderAccountTab(s) {
         <input id="acc-name" value="${esc(s.full_name || "")}" placeholder="Імʼя та прізвище" class="${input}">
         <textarea id="acc-note" rows="3" placeholder="Приватна нотатка (учень її не бачить)" class="${input}">${esc(s.note || "")}</textarea>
         <div class="flex items-center gap-3">
-          <button onclick="saveStudentInfo()" class="text-body-semibold px-4 py-2 rounded-xl bg-text-primary hover:bg-secondary text-text-inverse">Зберегти</button>
+          <button onclick="saveStudentInfo()" class="text-body-semibold px-4 py-2 rounded-full bg-text-primary hover:bg-secondary text-text-inverse">Зберегти</button>
           <span id="acc-saved" class="text-caption-xs text-success-emphasis font-medium"></span>
         </div>
         <p class="text-micro text-text-tertiary">Пошта: ${esc(s.email || "—")}. Змінити її можна лише в панелі Supabase.</p>
@@ -512,7 +512,7 @@ function renderAccountTab(s) {
           <button onclick="document.getElementById('acc-pass').value = generatePassword()" class="text-caption-bold px-3 rounded-lg border border-border-input hover:border-secondary transition">Згенерувати</button>
         </div>
         <div class="flex items-center gap-3">
-          <button id="acc-pass-btn" onclick="changeStudentPassword()" class="text-body-semibold px-4 py-2 rounded-xl bg-text-primary hover:bg-secondary text-text-inverse disabled:opacity-60">Змінити пароль</button>
+          <button id="acc-pass-btn" onclick="changeStudentPassword()" class="text-body-semibold px-4 py-2 rounded-full bg-text-primary hover:bg-secondary text-text-inverse disabled:opacity-60">Змінити пароль</button>
           <span id="acc-pass-msg" class="text-xs font-medium"></span>
         </div>
       </div>
