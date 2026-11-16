@@ -211,7 +211,27 @@ function updateView() {
 
 function renderSidebar() {
   const container = document.getElementById("sidebar-topics-list");
-  container.innerHTML = Object.keys(TOPICS_DATA).map(key => {
+  const keys = Object.keys(TOPICS_DATA);
+  if (topicEditMode) {
+    const grip = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+    const arrow = (d, on) => `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+    container.innerHTML = keys.map((key, i) => {
+      const btn = "p-1.5 rounded-full text-text-secondary hover:bg-interactive-subtle hover:text-secondary disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary transition";
+      return `
+      <div draggable="true" data-topic-key="${key}"
+        ondragstart="topicDragStart(event, '${key}')" ondragover="topicDragOver(event)" ondragleave="topicDragLeave(event)"
+        ondrop="topicDrop(event, '${key}')" ondragend="topicDragEnd()"
+        class="flex items-center gap-2 pl-2 pr-1.5 py-2 rounded-xl border border-border-default bg-surface cursor-grab active:cursor-grabbing">
+        <span class="text-text-tertiary shrink-0">${grip}</span>
+        <span class="text-micro font-semibold text-text-muted w-5 text-center shrink-0">${i + 1}</span>
+        <span class="flex-1 min-w-0 text-body-semibold text-text-primary truncate">${TOPICS_DATA[key].title}</span>
+        <button data-move="${key}:-1" onclick="moveTopic('${key}', -1)" class="${btn}" aria-label="Вище" ${i === 0 ? "disabled" : ""}>${arrow("M12 19V5M5 12l7-7 7 7")}</button>
+        <button data-move="${key}:1" onclick="moveTopic('${key}', 1)" class="${btn}" aria-label="Нижче" ${i === keys.length - 1 ? "disabled" : ""}>${arrow("M12 5v14M19 12l-7 7-7-7")}</button>
+      </div>`;
+    }).join("");
+    return;
+  }
+  container.innerHTML = keys.map(key => {
     const topic = TOPICS_DATA[key];
     const active = key === currentTopic;
     const c = getTopicCounts(key);
@@ -230,6 +250,91 @@ function renderSidebar() {
         </div>
       </button>`;
   }).join("");
+}
+
+// ---------- порядок тем (лише викладач) ----------
+// Порядок задає поле topics.position, тож однаковий для всіх учнів. Об'єкт TOPICS_DATA
+// зберігає порядок вставлення ключів, тому для зміни порядку його достатньо перебудувати.
+let topicEditMode = false;
+let topicDragKey = null;
+let topicSaveChain = Promise.resolve();
+
+function setTopicOrderStatus(text, kind) {
+  const el = document.getElementById("topic-order-status");
+  if (!el) return;
+  el.textContent = text || "";
+  el.className = "text-caption-xs font-medium " + (kind === "error" ? "text-error" : "text-success-emphasis");
+}
+
+function toggleTopicEdit() {
+  topicEditMode = !topicEditMode;
+  const btn = document.getElementById("topic-order-btn");
+  btn.textContent = topicEditMode ? "Готово" : "Змінити порядок тем";
+  btn.className = topicEditMode
+    ? "w-full text-body-semibold py-2 rounded-full bg-text-primary hover:bg-secondary text-text-inverse transition"
+    : "w-full text-body-semibold py-2 rounded-full border border-border-input text-text-primary hover:border-secondary hover:text-secondary transition";
+  document.getElementById("topic-order-hint").classList.toggle("hidden", !topicEditMode);
+  setTopicOrderStatus("");
+  renderSidebar();
+}
+
+// Нова послідовність ключів → перебудувати TOPICS_DATA, одразу показати й зберегти.
+async function applyTopicOrder(newKeys, focusKey) {
+  const oldData = TOPICS_DATA;
+  const oldKeys = Object.keys(oldData);
+  if (newKeys.join("|") === oldKeys.join("|")) return;
+  const next = {};
+  newKeys.forEach(k => { next[k] = oldData[k]; });
+  TOPICS_DATA = next;
+  renderSidebar();
+  if (focusKey) {
+    const b = document.querySelector(`[data-move^="${focusKey}:"]:not([disabled])`);
+    if (b) b.focus();
+  }
+  setTopicOrderStatus("Зберігаю…");
+  const order = newKeys.slice();
+  topicSaveChain = topicSaveChain.then(async () => {
+    try {
+      await apiSaveTopicOrder(order);
+      setTopicOrderStatus("Збережено ✓");
+    } catch (e) {
+      console.error(e);
+      TOPICS_DATA = oldData;
+      renderSidebar();
+      setTopicOrderStatus("Не вдалося зберегти: " + (e.message || e), "error");
+    }
+  });
+}
+
+function moveTopic(key, delta) {
+  const keys = Object.keys(TOPICS_DATA);
+  const i = keys.indexOf(key), j = i + delta;
+  if (i < 0 || j < 0 || j >= keys.length) return;
+  [keys[i], keys[j]] = [keys[j], keys[i]];
+  applyTopicOrder(keys, key);
+}
+
+function topicDragStart(ev, key) {
+  topicDragKey = key;
+  ev.dataTransfer.effectAllowed = "move";
+  try { ev.dataTransfer.setData("text/plain", key); } catch (e) {}
+  ev.currentTarget.classList.add("opacity-50");
+}
+function topicDragOver(ev) {
+  if (!topicDragKey) return;
+  ev.preventDefault();
+  ev.currentTarget.classList.add("border-secondary", "bg-interactive-subtle");
+}
+function topicDragLeave(ev) { ev.currentTarget.classList.remove("border-secondary", "bg-interactive-subtle"); }
+function topicDragEnd() { topicDragKey = null; renderSidebar(); }
+function topicDrop(ev, targetKey) {
+  ev.preventDefault();
+  const from = topicDragKey;
+  topicDragKey = null;
+  if (!from || from === targetKey) { renderSidebar(); return; }
+  const keys = Object.keys(TOPICS_DATA).filter(k => k !== from);
+  keys.splice(keys.indexOf(targetKey) + (Object.keys(TOPICS_DATA).indexOf(from) < Object.keys(TOPICS_DATA).indexOf(targetKey) ? 1 : 0), 0, from);
+  applyTopicOrder(keys);
 }
 
 // ---------- теорія ----------
