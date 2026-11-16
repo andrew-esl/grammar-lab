@@ -6,12 +6,13 @@
   <title>Кабінет викладача — Grammar Lab</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/theme.js?v=12"></script>
+  <script src="js/palettes.js?v=13"></script>
+  <script src="js/theme.js?v=13"></script>
   <style>
     body { font-family: 'Manrope', system-ui, sans-serif; }
     h1, h2, h3, .font-display { font-family: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif; }
-    .tab-on  { border-color: #4b41e1; color: #4b41e1; background: #fff; }
-    .tab-off { border-color: transparent; color: #64748b; }
+    .tab-on  { border-color: rgb(var(--c-primary)); color: rgb(var(--c-primary)); background: #fff; }
+    .tab-off { border-color: transparent; color: rgb(var(--c-text-muted)); }
     .saved-flash { animation: flash 1.2s ease; }
     @keyframes flash { 0% { opacity: 1 } 70% { opacity: 1 } 100% { opacity: 0 } }
   </style>
@@ -100,9 +101,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- ?v=N: збільшуйте після кожної зміни у js/*.js (захист від кешу браузера) -->
-  <script src="js/config.js?v=12"></script>
-  <script src="js/api.js?v=12"></script>
-  <script src="js/exercise-text.js?v=12"></script>
-  <script src="js/teacher.js?v=12"></script>
+  <script src="js/config.js?v=13"></script>
+  <script src="js/api.js?v=13"></script>
+  <script src="js/exercise-text.js?v=13"></script>
+  <script src="js/teacher.js?v=13"></script>
 </body>
 </html>

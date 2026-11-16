@@ -9,10 +9,10 @@
 const THEORY_TONES = {
   noun:     { chip: "bg-white text-text-primary border-border-input",                     dot: "bg-text-muted" },
   colour:   { chip: "bg-interactive-subtle text-interactive-text border-interactive-border", dot: "bg-secondary" },
-  origin:   { chip: "bg-sand-surface text-sand-text border-[#ecd48a]",                    dot: "bg-sand" },
-  opinion:  { chip: "bg-lilac-surface text-lilac-text border-[#d5c8dc]",                  dot: "bg-lilac" },
-  size:     { chip: "bg-seafoam-surface text-seafoam-text border-[#a9d9d7]",              dot: "bg-seafoam" },
-  age:      { chip: "bg-sage-surface text-sage-text border-[#bfd0c4]",                    dot: "bg-sage" },
+  origin:   { chip: "bg-sand-surface text-sand-text border-sand-border",                    dot: "bg-sand" },
+  opinion:  { chip: "bg-lilac-surface text-lilac-text border-lilac-border",                  dot: "bg-lilac" },
+  size:     { chip: "bg-seafoam-surface text-seafoam-text border-seafoam-border",              dot: "bg-seafoam" },
+  age:      { chip: "bg-sage-surface text-sage-text border-sage-border",                    dot: "bg-sage" },
   material: { chip: "bg-error-surface text-error-emphasis border-error-border",           dot: "bg-error" },
   neutral:  { chip: "bg-surface-subtle text-text-secondary border-border-default",        dot: "bg-text-tertiary" },
 };

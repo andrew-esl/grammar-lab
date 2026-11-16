@@ -80,3 +80,21 @@ supabase/               SQL-скрипти та серверна функція
 
 - Безкоштовний Supabase присипляє проєкт після тижня без звернень — перше відкриття після паузи повільне.
 - Supabase віддає максимум 1000 рядків за запит; усі завантаження йдуть сторінками через `fetchAll` в `js/api.js`.
+
+## Оформлення та палітри
+
+Усі кольори сайту — CSS-змінні (`--c-…`), які задає обрана палітра з `js/palettes.js`;
+токени Tailwind описані в `js/theme.js`. Перемикач «Колір оформлення» стоїть унизу бічного меню,
+вибір зберігається в `localStorage` (кабінет викладача підхоплює його автоматично).
+
+Палітри (крім типової «Океан» з DESIGN.md) генеруються за принципами Material You: одне «зерно»
+кольору → тональні палітри HCT → токени; акценти категорій слів гармонізуються із зерном.
+Щоб додати палітру, допишіть рядок у `SEEDS` у `scripts/gen-palettes.mjs` і перегенеруйте файл:
+
+```
+npm i --no-save @material/material-color-utilities esbuild
+npx esbuild scripts/gen-palettes.mjs --bundle --platform=node --format=esm --outfile=/tmp/gen.mjs
+node /tmp/gen.mjs > js/palettes.js
+```
+
+Після змін у `js/*.js` збільшуйте `?v=N` у `index.html` і `teacher.html`.

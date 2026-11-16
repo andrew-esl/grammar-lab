@@ -6,17 +6,18 @@
   <title>Grammar Lab — англійська граматика</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/theme.js?v=12"></script>
+  <script src="js/palettes.js?v=13"></script>
+  <script src="js/theme.js?v=13"></script>
   <style>
     body { font-family: 'Manrope', system-ui, sans-serif; }
     h1, h2, h3, .font-display { font-family: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif; }
     .word-chip { transition: all .15s ease; user-select: none; }
     .word-chip:active { transform: scale(.95); }
-    .strike-word { text-decoration: line-through; color: #b85450; background-color: #f9dede; border-color: #e6a9a9; }
-    .shadow-inner-soft { box-shadow: inset 0 1px 3px rgba(30,41,59,.06); }
+    .strike-word { text-decoration: line-through; color: rgb(var(--c-strike-text)); background-color: rgb(var(--c-strike-surface)); border-color: rgb(var(--c-strike-border)); }
+    .shadow-inner-soft { box-shadow: inset 0 1px 3px rgb(var(--c-shadow) / .06); }
     summary::-webkit-details-marker { display: none; }
     .theory-body table { width: 100%; border-collapse: collapse; }
-    .theory-body td, .theory-body th { border: 1px solid #dde5ec; padding: 4px 6px; }
+    .theory-body td, .theory-body th { border: 1px solid rgb(var(--c-border-default)); padding: 4px 6px; }
     .theory-body ul { margin-top: .25rem; }
   </style>
 </head>
@@ -82,6 +83,11 @@
       </div>
 
       <div id="sidebar-topics-list" class="p-3 overflow-y-auto flex-1 space-y-1.5"></div>
+
+      <div class="p-4 border-t border-border-default bg-surface-subtle">
+        <div class="text-caption-bold uppercase tracking-wider text-text-muted mb-2">Колір оформлення</div>
+        <div id="palette-switcher" class="flex justify-between"></div>
+      </div>
     </aside>
 
     <!-- Шапка -->
@@ -172,11 +178,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- ?v=N — захист від кешу браузера: ПІСЛЯ КОЖНОЇ ЗМІНИ у js/*.js
        збільшуйте номер, інакше відвідувач може отримати стару версію файлу. -->
-  <script src="js/config.js?v=12"></script>
-  <script src="js/api.js?v=12"></script>
-  <script src="js/theory.js?v=12"></script>
-  <script src="js/translate.js?v=12"></script>
-  <script src="js/engine.js?v=12"></script>
-  <script src="js/auth.js?v=12"></script>
+  <script src="js/config.js?v=13"></script>
+  <script src="js/api.js?v=13"></script>
+  <script src="js/theory.js?v=13"></script>
+  <script src="js/translate.js?v=13"></script>
+  <script src="js/engine.js?v=13"></script>
+  <script src="js/auth.js?v=13"></script>
 </body>
 </html>
